@@ -5,6 +5,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 
 import prisma from "@/lib/prisma";
 import { logger } from "@/lib/logger";
+import { env } from "@/env";
 
 export const auth = betterAuth({
     database: prismaAdapter(prisma, {
@@ -14,11 +15,11 @@ export const auth = betterAuth({
     emailAndPassword: {
         enabled: false,
     },
-    baseURL: process.env.BETTER_AUTH_URL,
+    baseURL: env.BETTER_AUTH_URL,
     socialProviders: {
         google: {
-            clientId: process.env.GOOGLE_CLIENT_ID as string,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+            clientId: env.GOOGLE_CLIENT_ID,
+            clientSecret: env.GOOGLE_CLIENT_SECRET
         },
     },
     plugins: [
@@ -43,7 +44,7 @@ export const auth = betterAuth({
     },
     logger: {
         disabled: false,
-        level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+        level: env.LOG_LEVEL,
         log: (level, message, ...args) => {
             const log = {
                 debug: logger.debug.bind(logger),

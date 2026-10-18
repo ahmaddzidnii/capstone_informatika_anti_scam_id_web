@@ -1,13 +1,12 @@
 
+import { env } from "@/env";
 import pino from "pino";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 
 export const logger = pino({
-    level: process.env.LOG_LEVEL ?? (isDevelopment ? "debug" : "info"),
-
+    level: env.LOG_LEVEL,
     name: "antiscamid",
-
     redact: {
         paths: [
             "req.headers.authorization",
