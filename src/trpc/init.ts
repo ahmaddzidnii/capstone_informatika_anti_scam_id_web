@@ -10,13 +10,25 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
     const requestId =
         opts.headers.get('x-request-id') || crypto.randomUUID();
 
-    const requestLogger = logger.child({ requestId });
+    const session = await auth.api.getSession({
+        headers: opts.headers,
+    });
+
+
+    const requestLogger = logger.child({
+        requestId,
+        user: {
+            id: session?.user?.id ?? null,
+            type: session?.user.id ? 'AUTENTICATED' : 'GUEST',
+        }
+    });
 
     requestLogger.debug('tRPC context initialized');
 
     return {
         prisma,
         logger: requestLogger,
+        session,
         headers: opts.headers,
     };
 };
@@ -84,11 +96,8 @@ export const baseProcedure = t.procedure.use(
 
 export const protectedProcedure = baseProcedure.use(
     async ({ ctx, next }) => {
-        const session = await auth.api.getSession({
-            headers: ctx.headers,
-        });
 
-        if (!session) {
+        if (!ctx.session) {
             ctx.logger.warn(
                 'Unauthorized access attempt detected. No valid session found.',
             );
@@ -99,18 +108,12 @@ export const protectedProcedure = baseProcedure.use(
             });
         }
 
-        const extendedLogger = ctx.logger.child({
-            userId: session.user.id,
-        });
-
-        extendedLogger.debug('Session validated');
 
         return next({
             ctx: {
                 ...ctx,
-                session,
-                logger: extendedLogger,
-            },
+                session: ctx.session,
+            }
         });
     },
 );
