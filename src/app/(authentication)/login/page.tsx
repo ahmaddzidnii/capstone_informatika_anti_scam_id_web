@@ -1,13 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { LoaderCircle } from "lucide-react";
-import { toast } from "@/components/ui/toast";
-
-import { authClient } from "@/lib/auth-client";
-
+import Link from "next/link";
+import { LuArrowLeft, LuLoaderCircle, LuShieldCheck } from "react-icons/lu";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "@/components/ui/toast";
+import { authClient } from "@/lib/auth-client";
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -46,96 +44,96 @@ export default function LoginPage() {
     try {
       const result = await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/dashboard",
+        callbackURL: "/riwayat",
       });
 
       if (result.error) {
         toast.add({
           type: "error",
-          title: "Authentication failed",
+          title: "Autentikasi gagal",
         });
         setIsLoading(false);
       }
     } catch {
       toast.add({
         type: "error",
-        title: "An unexpected error occurred",
+        title: "Terjadi kesalahan saat masuk",
       });
       setIsLoading(false);
     }
   }
 
   return (
-    <main className="relative flex min-h-svh items-center justify-center overflow-hidden bg-background px-4 py-12">
-      {/* Subtle background decoration */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage: "radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--primary) 9%, transparent), transparent 55%)",
-        }}
-      />
+    <div className="grid min-h-screen bg-background text-foreground lg:grid-cols-12">
+      {/* Panel Kiri: Tetap Minimalis */}
+      <div className="relative hidden flex-col justify-center overflow-hidden border-r border-border bg-muted/20 px-12 lg:col-span-5 lg:flex xl:px-16">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 left-0 w-48 opacity-40"
+          style={{
+            backgroundImage: "radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)",
+            backgroundSize: "14px 14px",
+            maskImage: "linear-gradient(to right, black, transparent)",
+            WebkitMaskImage: "linear-gradient(to right, black, transparent)",
+          }}
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-24 -left-24 h-80 w-80 rounded-full bg-emerald-500/10 blur-3xl"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-amber-500/10 blur-3xl"
+        />
 
-      <div className="relative w-full max-w-95">
-        <div className="mb-8 flex flex-col items-center gap-4 text-center">
-          <div className="flex size-12 items-center justify-center rounded-2xl border bg-card shadow-sm">
-            <svg
-              viewBox="0 0 24 24"
-              className="size-6"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.7"
-              aria-hidden="true"
-            >
-              <path
-                d="M12 3 4.5 7v5c0 4.5 3.2 7.5 7.5 9 4.3-1.5 7.5-4.5 7.5-9V7L12 3Z"
-                strokeLinejoin="round"
-              />
-              <path
-                d="m9 12 2 2 4-4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+        <div className="relative space-y-5">
+          <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-background">
+            <LuShieldCheck className="h-6 w-6 text-foreground" />
           </div>
 
-          <div className="space-y-2">
-            <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
-            <p className="text-sm leading-6 text-muted-foreground">Sign in to your account to continue.</p>
-          </div>
+          <h2 className="max-w-xs text-2xl font-bold leading-snug tracking-tight xl:text-3xl">Periksa pesan &amp; dokumen sebelum terlambat.</h2>
+        </div>
+      </div>
+
+      {/* Panel Kanan: Area Login */}
+      <div className="relative flex flex-col justify-between p-6 sm:p-10 lg:col-span-7">
+        {/* Top Back Link */}
+        <div>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <LuArrowLeft className="h-4 w-4" />
+            <span>Beranda</span>
+          </Link>
         </div>
 
-        <Card className="gap-0 overflow-hidden rounded-2xl shadow-sm">
-          <CardHeader className="gap-2 px-6 pt-6 pb-5">
-            <CardTitle className="text-lg">Sign in</CardTitle>
-            <CardDescription>Use your Google account for secure access.</CardDescription>
-          </CardHeader>
-
-          <CardContent className="px-6 pb-6">
-            <Button
-              type="button"
-              variant="outline"
-              className="h-11 w-full gap-3 rounded-lg text-sm font-medium shadow-xs"
-              onClick={handleGoogleLogin}
-              disabled={isLoading}
-            >
-              {isLoading ? <LoaderCircle className="size-4.5 animate-spin" /> : <GoogleIcon className="size-4.5 shrink-0" />}
-
-              {isLoading ? "Redirecting to Google..." : "Continue with Google"}
-            </Button>
-
-            <p className="text-center text-xs leading-5 text-muted-foreground mt-2">
-              By continuing, you agree to the terms of service and privacy policy.
+        {/* Center Auth Box */}
+        <div className="mx-auto w-full max-w-xs space-y-6 text-center">
+          <div className="space-y-2.5">
+            <h1 className="text-2xl font-bold tracking-tight">Masuk ke AntiScamID</h1>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              Simpan riwayat pemeriksaan pesan dan dokumen Anda secara otomatis, serta laporkan indikasi penipuan.
             </p>
-          </CardContent>
+          </div>
 
-          <CardFooter className="justify-center border-t bg-muted/30 px-6 py-4">
-            <p className="text-xs text-muted-foreground">Your account is protected with Google sign-in.</p>
-          </CardFooter>
-        </Card>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 w-full gap-3 font-medium"
+            onClick={handleGoogleLogin}
+            disabled={isLoading}
+          >
+            {isLoading ? <LuLoaderCircle className="h-4 w-4 animate-spin" /> : <GoogleIcon className="h-4 w-4 shrink-0" />}
+            <span>{isLoading ? "Memproses..." : "Lanjutkan dengan Google"}</span>
+          </Button>
+        </div>
 
-        <p className="mt-8 text-center text-xs text-muted-foreground">© {new Date().getFullYear()} Your Application</p>
+        {/* Bottom Legal Note */}
+        <p className="mx-auto max-w-xs text-center text-xs text-muted-foreground">
+          Dengan masuk, Anda menyetujui Ketentuan Layanan dan Kebijakan Privasi AntiScamID.
+        </p>
       </div>
-    </main>
+    </div>
   );
 }

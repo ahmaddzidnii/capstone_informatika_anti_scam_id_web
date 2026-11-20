@@ -1,0 +1,89 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { LuLogIn } from "react-icons/lu";
+import { Logo } from "@/components/logo";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+export function Navbar() {
+  const [isVisible, setIsVisible] = useState(true);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      setIsScrolled(currentScrollY > 10);
+
+      // Sembunyikan saat scroll ke bawah melewati tinggi navbar (64px),
+      // munculkan kembali saat scroll ke atas
+      if (currentScrollY > lastScrollY.current && currentScrollY > 64) {
+        setIsVisible(false);
+      } else if (currentScrollY < lastScrollY.current) {
+        setIsVisible(true);
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  return (
+    <header
+      className={cn(
+        "sticky top-0 z-50 w-full border-b bg-background/85 backdrop-blur-md transition-transform duration-300 ease-in-out",
+        isVisible ? "translate-y-0" : "-translate-y-full",
+        isScrolled && "shadow-2xs",
+      )}
+    >
+      <div className="container mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-6">
+        <div className="flex items-center gap-8">
+          <Link
+            href="/"
+            aria-label="AntiScamID Beranda"
+          >
+            <Logo size="md" />
+          </Link>
+        </div>
+
+        <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
+          <Link
+            href="/deteksi-pesan"
+            className="transition-colors hover:text-foreground"
+          >
+            Deteksi Pesan
+          </Link>
+          <Link
+            href="/deteksi-dokumen"
+            className="transition-colors hover:text-foreground"
+          >
+            Deteksi Dokumen
+          </Link>
+          <Link
+            href="/riwayat"
+            className="transition-colors hover:text-foreground"
+          >
+            Riwayat
+          </Link>
+        </nav>
+
+        <Button
+          size="sm"
+          className="gap-2 px-4 font-medium shadow-xs"
+          nativeButton={false}
+          render={
+            <Link href="/login">
+              <LuLogIn className="h-4 w-4" />
+              <span>Masuk</span>
+            </Link>
+          }
+        />
+      </div>
+    </header>
+  );
+}
