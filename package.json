@@ -11,7 +11,8 @@
     "sync-api": "tsx scripts/sync-api.ts",
     "bot:polling": "tsx scripts/bot-polling.ts",
     "test": "vitest run",
-    "test:e2e": "vitest run tests/e2e/antiscam.test.ts"
+    "test:e2e": "vitest run tests/e2e/antiscam.test.ts",
+    "test:unit": "vitest run tests/unit"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

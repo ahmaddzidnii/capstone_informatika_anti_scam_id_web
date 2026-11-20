@@ -71,7 +71,7 @@ export async function predictTextAI(
     text: string,
     requestId?: string,
 ): Promise<PredictTextResponse> {
-    if (process.env.USE_MOCK_AI === 'true') {
+    if (env.USE_MOCK_AI) {
         await new Promise((r) => setTimeout(r, 300)); // Simulasi latency jaringan
         return runMockAnalysis(text);
     }
