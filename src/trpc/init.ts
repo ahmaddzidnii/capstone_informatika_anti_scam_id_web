@@ -5,8 +5,12 @@ import { initTRPC, TRPCError } from '@trpc/server';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { env } from '@/env';
 
-export const createTRPCContext = async (opts: { headers: Headers }) => {
+export const createTRPCContext = async (opts: {
+    headers: Headers;
+    isInternalBot?: boolean;
+}) => {
     const requestId =
         opts.headers.get('x-request-id') || crypto.randomUUID();
 
@@ -14,13 +18,12 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
         headers: opts.headers,
     });
 
-
     const requestLogger = logger.child({
         requestId,
         user: {
             id: session?.user?.id ?? null,
-            type: session?.user.id ? 'AUTENTICATED' : 'GUEST',
-        }
+            type: session?.user.id ? 'AUTHENTICATED' : 'GUEST',
+        },
     });
 
     requestLogger.debug('tRPC context initialized');
@@ -30,6 +33,7 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
         logger: requestLogger,
         session,
         headers: opts.headers,
+        isInternalBot: opts.isInternalBot ?? false,
     };
 };
 
@@ -132,6 +136,28 @@ export const adminProcedure = protectedProcedure.use(
         }
 
         ctx.logger.debug('Admin authorization validated');
+
+        return next({ ctx });
+    },
+);
+
+export const botProcedure = baseProcedure.use(
+    async ({ ctx, next }) => {
+        const apiKey = ctx.headers.get('x-internal-api-key');
+        const isAuthorized =
+            ctx.isInternalBot ||
+            (Boolean(apiKey) && apiKey === env.BETTER_AUTH_SECRET);
+
+        if (!isAuthorized) {
+            ctx.logger.warn(
+                'Unauthorized bot service request detected.',
+            );
+
+            throw new TRPCError({
+                code: 'UNAUTHORIZED',
+                message: 'Invalid bot service credentials.',
+            });
+        }
 
         return next({ ctx });
     },

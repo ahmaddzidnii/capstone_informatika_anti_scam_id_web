@@ -10,6 +10,13 @@ export const env = createEnv({
         GOOGLE_CLIENT_ID: z.string().min(1),
         GOOGLE_CLIENT_SECRET: z.string().min(1),
         LOG_LEVEL: z.enum(["error", "warn", "info", "debug"]).default("debug"),
+        TELEGRAM_BOT_TOKEN: z.string().min(1),
+        TELEGRAM_BOT_MODE: z.enum(["polling", "webhook"]).default("polling"),
+        TELEGRAM_WEBHOOK_SECRET: z.string().min(16).optional(),
+        USE_MOCK_AI: z
+            .enum(['true', 'false'])
+            .default('true')
+            .transform((v) => v === 'true'),
     },
 
     client: {
