@@ -1,18 +1,30 @@
 # Anti Scam ID
 
-Anti Scam ID is a Next.js application with PostgreSQL/Prisma, Better Auth, Google OAuth, and an external AI API.
+Anti Scam ID adalah aplikasi web untuk mendeteksi indikasi penipuan dari pesan dan dokumen. Aplikasi ini menggunakan Next.js, PostgreSQL, Prisma, Better Auth, Google OAuth, dan AI API eksternal. Aplikasi juga menyediakan bot Telegram untuk pemeriksaan pesan dan pelaporan penipuan.
 
-## Prerequisites
+## Fitur
 
-- Node.js 20.9 or newer
+- Deteksi pesan mencurigakan melalui web.
+- Deteksi dokumen.
+- Riwayat hasil pemeriksaan.
+- Pelaporan pesan atau akun yang diduga melakukan penipuan.
+- Dashboard administrator dan moderasi laporan.
+- Login dengan Google OAuth.
+- Bot Telegram dengan perintah `/cek`, `/lapor`, `/panduan`, dan `/bantuan`.
+- Mock AI untuk development dan pengujian tanpa AI API eksternal.
+
+## Prasyarat
+
+- Node.js 20.9 atau lebih baru
 - npm
-- PostgreSQL 14 or newer
-- Google OAuth credentials
-- A running AI API that exposes `GET /openapi.json`
+- PostgreSQL 14 atau lebih baru
+- Kredensial Google OAuth
+- AI API yang aktif dan menyediakan `GET /openapi.json`
+- Token bot Telegram jika ingin menjalankan bot
 
-## Installation
+## Instalasi
 
-### 1. Clone and install dependencies
+### 1. Clone repository dan install dependency
 
 ```bash
 git clone <REPOSITORY_URL>
@@ -20,25 +32,25 @@ cd anti-scam-id
 npm install
 ```
 
-Replace `<REPOSITORY_URL>` with the repository URL from GitHub.
+Ganti `<REPOSITORY_URL>` dengan URL repository GitHub.
 
-### 2. Create a PostgreSQL database
+### 2. Siapkan PostgreSQL
 
-Create a database named `anti_scam_id`, for example in `psql`:
+Buat database bernama `anti_scam_id`, misalnya melalui `psql`:
 
 ```sql
 CREATE DATABASE anti_scam_id;
 ```
 
-The default example connection string uses:
+Contoh connection string:
 
 ```text
 postgresql://postgres:postgres@localhost:5432/anti_scam_id
 ```
 
-Update the username, password, host, port, or database name when your local PostgreSQL setup differs.
+Sesuaikan username, password, host, port, atau nama database dengan konfigurasi PostgreSQL lokal.
 
-### 3. Configure environment variables
+### 3. Buat file environment
 
 Windows PowerShell:
 
@@ -46,108 +58,183 @@ Windows PowerShell:
 Copy-Item .env.example .env
 ```
 
-macOS or Linux:
+macOS atau Linux:
 
 ```bash
 cp .env.example .env
 ```
 
-Open `.env` and replace the placeholder values:
+Edit `.env` dan ganti semua placeholder. Variabel yang digunakan aplikasi:
 
-| Variable | Required | Description |
+| Variabel | Wajib | Keterangan |
 | --- | --- | --- |
-| `DATABASE_URL` | Yes | PostgreSQL connection string |
-| `BETTER_AUTH_URL` | Yes | Public URL of this app, for example `http://localhost:3000` locally |
-| `BETTER_AUTH_SECRET` | Yes | Secret used to sign/authenticate sessions |
-| `GOOGLE_CLIENT_ID` | Yes | Google OAuth client ID |
-| `GOOGLE_CLIENT_SECRET` | Yes | Google OAuth client secret |
-| `AI_API_URL` | Yes | Base URL of the AI API, for example `http://localhost:3001` |
-| `LOG_LEVEL` | No | One of `error`, `warn`, `info`, or `debug`; defaults to `info` in the example |
-| `NEXT_PUBLIC_APP_NAME` | No | Public application name |
+| `DATABASE_URL` | Ya | Connection string PostgreSQL |
+| `BETTER_AUTH_URL` | Ya | URL aplikasi, gunakan `http://localhost:3000` untuk lokal |
+| `BETTER_AUTH_SECRET` | Ya | Secret untuk autentikasi session |
+| `GOOGLE_CLIENT_ID` | Ya | Google OAuth Client ID |
+| `GOOGLE_CLIENT_SECRET` | Ya | Google OAuth Client Secret |
+| `AI_API_URL` | Ya | URL dasar AI API, misalnya `http://localhost:3001` |
+| `TELEGRAM_BOT_TOKEN` | Ya | Token bot dari BotFather |
+| `TELEGRAM_BOT_MODE` | Tidak | `polling` atau `webhook`; default `polling` |
+| `TELEGRAM_WEBHOOK_SECRET` | Tidak | Secret webhook, minimal 16 karakter |
+| `USE_MOCK_AI` | Tidak | `true` untuk mock AI, `false` untuk AI API asli; default `true` |
+| `LOG_LEVEL` | Tidak | `error`, `warn`, `info`, atau `debug` |
+| `NEXT_PUBLIC_APP_NAME` | Tidak | Nama aplikasi yang ditampilkan ke pengguna |
 
-Generate a local auth secret:
+Generate secret autentikasi lokal:
 
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 ```
 
-For Google OAuth, create an OAuth 2.0 Client ID in Google Cloud Console and add this redirect URI:
+Untuk login Google, tambahkan redirect URI berikut pada Google Cloud Console:
 
 ```text
 http://localhost:3000/api/auth/callback/google
 ```
 
-For a deployed app, replace `http://localhost:3000` in `BETTER_AUTH_URL` and the Google OAuth redirect URI with the deployed origin.
+Untuk deployment, gunakan domain deployment pada `BETTER_AUTH_URL` dan redirect URI Google.
 
-### 4. Initialize the database
+### 4. Inisialisasi database
 
-For a fresh local database, create the Prisma schema tables:
+Untuk database lokal baru:
 
 ```bash
 npx prisma db push
 ```
 
-If Prisma migrations are later added to `prisma/migrations`, use:
+Perintah tersebut membuat tabel sesuai schema Prisma. Jika repository sudah memiliki migration, gunakan:
 
 ```bash
 npx prisma migrate deploy
 ```
 
-### 5. Generate the AI API types
+### 5. Sinkronisasi tipe AI API
 
-With your AI API running, synchronize its OpenAPI schema:
+Pastikan AI API aktif dan `AI_API_URL` mengarah ke URL yang benar, lalu jalankan:
 
 ```bash
 npm run sync-api
 ```
 
-This writes `src/types/ai-api.d.ts`. It is safe to run again whenever the AI API changes.
+Perintah ini mengambil schema dari `${AI_API_URL}/openapi.json` dan menghasilkan `src/types/ai-api.d.ts`.
 
-### 6. Start the application
+Jika hanya ingin menjalankan aplikasi dengan mock AI, tetap gunakan `USE_MOCK_AI=true`. AI API tetap diperlukan ketika menjalankan `npm run sync-api`, kecuali tipe hasil generate sudah tersedia.
+
+## Menjalankan aplikasi
+
+Jalankan server Next.js:
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Buka [http://localhost:3000](http://localhost:3000).
 
-The AI API is not started by this repository. Start it separately and set `AI_API_URL` to its base URL.
+### Menjalankan bot Telegram
 
-## Available npm scripts
+Bot polling dijalankan di terminal terpisah:
 
-| Command | Description |
+```bash
+npm run bot:polling
+```
+
+Pastikan:
+
+- `TELEGRAM_BOT_TOKEN` valid.
+- `TELEGRAM_BOT_MODE=polling`.
+- Server Next.js dan database sudah berjalan.
+- `USE_MOCK_AI` diatur sesuai kebutuhan.
+
+Script polling akan menghapus webhook yang aktif dan mendaftarkan command bot secara otomatis. Jangan menjalankan lebih dari satu instance polling untuk token bot yang sama.
+
+Mode `webhook` memerlukan konfigurasi deployment dan URL webhook Telegram yang dapat diakses publik. Repository menyediakan endpoint webhook di `/api/telegram/webhook`, tetapi tidak menyediakan script deployment webhook otomatis.
+
+## NPM scripts
+
+| Command | Kegunaan |
 | --- | --- |
-| `npm run dev` | Start the Next.js development server |
-| `npm run build` | Create a production build |
-| `npm run start` | Start the production build |
-| `npm run lint` | Run Biome checks |
-| `npm run format` | Format the source with Biome |
-| `npm run sync-api` | Fetch the AI API OpenAPI schema and regenerate its types |
+| `npm run dev` | Menjalankan Next.js development server |
+| `npm run build` | Membuat production build |
+| `npm run start` | Menjalankan production build |
+| `npm run lint` | Menjalankan pemeriksaan Biome |
+| `npm run format` | Memformat source code dengan Biome |
+| `npm run sync-api` | Mengambil OpenAPI schema AI API dan membuat tipe TypeScript |
+| `npm run bot:polling` | Menjalankan bot Telegram dalam mode long polling |
+| `npm test` | Menjalankan seluruh test sekali |
+| `npm run test:unit` | Menjalankan unit test di `tests/unit` |
+| `npm run test:e2e` | Menjalankan end-to-end flow Anti Scam ID |
 
-## Production build
+## Pengujian
+
+Untuk menjalankan seluruh test:
+
+```bash
+npm test
+```
+
+Untuk unit test saja:
+
+```bash
+npm run test:unit
+```
+
+Untuk end-to-end test:
+
+```bash
+npm run test:e2e
+```
+
+Test menggunakan konfigurasi Vitest pada `vitest.config.ts` dan berjalan pada environment Node.js. Gunakan `USE_MOCK_AI=true` agar test tidak bergantung pada AI API eksternal.
+
+## Production
 
 ```bash
 npm run build
 npm run start
 ```
 
-Set all required environment variables in the deployment platform and use the deployed HTTPS URL as `BETTER_AUTH_URL`.
+Pastikan seluruh environment variable wajib telah dikonfigurasi pada platform deployment. Untuk production:
+
+- Gunakan HTTPS pada `BETTER_AUTH_URL`.
+- Gunakan database PostgreSQL production.
+- Gunakan `USE_MOCK_AI=false` jika ingin memakai AI API asli.
+- Atur kredensial Google OAuth sesuai domain production.
+- Gunakan mode Telegram `webhook` jika bot dijalankan melalui endpoint publik.
 
 ## Troubleshooting
 
-### Prisma cannot connect to PostgreSQL
+### Prisma tidak dapat terhubung ke PostgreSQL
 
-- Verify PostgreSQL is running.
-- Verify the database exists.
-- Verify `DATABASE_URL` credentials and port.
-- Test the connection with `npx prisma db push`.
+- Pastikan PostgreSQL sedang berjalan.
+- Pastikan database `anti_scam_id` sudah dibuat.
+- Periksa username, password, port, dan host pada `DATABASE_URL`.
+- Jalankan `npx prisma db push` untuk menguji koneksi.
 
-### Google sign-in redirect is invalid
+### Login Google gagal atau redirect tidak valid
 
-Add `http://localhost:3000/api/auth/callback/google` for local development in Google Cloud Console. Use the deployed equivalent for production.
+Pastikan redirect URI berikut terdaftar di Google Cloud Console:
 
-### Environment variable validation fails
+```text
+http://localhost:3000/api/auth/callback/google
+```
 
-- Ensure `.env` is in the repository root.
-- Do not leave placeholder values in `.env`.
-- Ensure `BETTER_AUTH_URL` and `AI_API_URL` are valid URLs.
+### Bot Telegram tidak berjalan
+
+- Pastikan token berasal dari BotFather dan tidak memiliki spasi tambahan.
+- Pastikan `TELEGRAM_BOT_MODE=polling`.
+- Hentikan instance bot lain yang memakai token sama.
+- Pastikan `.env` berada di root repository.
+
+### Sinkronisasi AI API gagal
+
+- Pastikan AI API sedang aktif.
+- Pastikan endpoint `${AI_API_URL}/openapi.json` dapat diakses.
+- Periksa nilai `AI_API_URL` agar tidak memiliki path `/openapi.json` ganda.
+
+### Validasi environment gagal
+
+- Pastikan `.env` berada di root repository.
+- Ganti semua nilai placeholder.
+- Pastikan `BETTER_AUTH_URL` dan `AI_API_URL` merupakan URL yang valid.
+- Pastikan `TELEGRAM_WEBHOOK_SECRET` memiliki minimal 16 karakter jika digunakan.
