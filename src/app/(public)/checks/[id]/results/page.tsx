@@ -207,10 +207,19 @@ export default function CheckResultPage() {
   const isDocument =
     Boolean(data.document) ||
     data.inputSource.toUpperCase().includes("DOCUMENT");
-  const confidencePercent =
+  const rawPercent =
     data.confidenceScore <= 1
       ? Math.round(data.confidenceScore * 100)
       : Math.round(data.confidenceScore);
+
+  const normalizedLabel = data.predictionLabel.trim().toUpperCase();
+  const isSafeVerdict =
+    normalizedLabel.includes("NORMAL") ||
+    normalizedLabel.includes("SAFE") ||
+    normalizedLabel.includes("AMAN") ||
+    normalizedLabel.includes("LEGIT");
+
+  const confidencePercent = isSafeVerdict ? 100 - rawPercent : rawPercent;
   const verdict = getVerdictConfig(data.predictionLabel);
   const VerdictIcon = verdict.Icon;
 
@@ -347,8 +356,11 @@ export default function CheckResultPage() {
           <h3 className="font-semibold text-sm">Indikasi Pola</h3>
           {data.indicators.length > 0 ? (
             <ul className="space-y-2 text-muted-foreground text-sm">
-              {data.indicators.map((item, idx) => (
-                <li key={`${item}-${idx}`} className="flex items-start gap-2.5">
+              {data.indicators.map((item) => (
+                <li
+                  key={`${item}-${item.charAt(1)}`}
+                  className="flex items-start gap-2.5"
+                >
                   <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/50" />
                   <span className="leading-relaxed">{item}</span>
                 </li>

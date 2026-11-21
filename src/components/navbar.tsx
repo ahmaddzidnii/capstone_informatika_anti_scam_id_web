@@ -52,12 +52,12 @@ export function Navbar() {
           >
             Deteksi Pesan
           </Link>
-          <Link
+          {/* <Link
             href="/deteksi-dokumen"
             className="transition-colors hover:text-foreground"
           >
             Deteksi Dokumen
-          </Link>
+          </Link> */}
           <Link
             href="/riwayat"
             className="transition-colors hover:text-foreground"

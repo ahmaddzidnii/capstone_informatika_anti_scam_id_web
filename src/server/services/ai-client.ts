@@ -14,6 +14,98 @@ export interface PredictDocumentResponse extends PredictTextResponse {
   page_count: number | null;
 }
 
+// Menampung format README baru maupun format lama yang belum lengkap
+interface RawAiPredictResponse {
+  label?: string | null;
+  score?: number | null;
+  prob_penipuan?: number | null; // fallback format lama
+  model_version?: string | null;
+  indicators?: Array<{ kode?: string; keterangan?: string } | string> | null;
+  advice?: string[] | string | null;
+  processing_ms?: number | null;
+}
+
+const LABEL_MAP: Record<string, PredictTextResponse["label"]> = {
+  // Sesuai README
+  "indikasi penipuan": "SCAM",
+  "pesan normal": "NORMAL",
+  "belum dapat dipastikan": "UNCERTAIN",
+  // Variasi format lama / singkatan
+  penipuan: "SCAM",
+  scam: "SCAM",
+  normal: "NORMAL",
+  aman: "NORMAL",
+  meragukan: "UNCERTAIN",
+  ragu: "UNCERTAIN",
+  uncertain: "UNCERTAIN",
+};
+
+const DEFAULT_RECOMMENDATIONS: Record<PredictTextResponse["label"], string> = {
+  SCAM: "Jangan mentransfer uang, mengklik tautan, atau membagikan kode OTP. Verifikasi pengirim melalui saluran resmi.",
+  UNCERTAIN:
+    "Pesan mengandung indikasi mencurigakan. Periksa ulang identitas pengirim sebelum menindaklanjuti.",
+  NORMAL:
+    "Tidak ditemukan indikasi penipuan yang kuat, namun tetap waspada terhadap permintaan data pribadi.",
+};
+
+function mapAiResponse(raw: RawAiPredictResponse): PredictTextResponse {
+  const normalizedLabel =
+    typeof raw.label === "string" ? raw.label.toLowerCase().trim() : "";
+  const label: PredictTextResponse["label"] =
+    LABEL_MAP[normalizedLabel] ?? "UNCERTAIN";
+
+  // Ambil score baru, fallback ke prob_penipuan lama, pastikan angka valid 0..1
+  const rawScore =
+    typeof raw.score === "number"
+      ? raw.score
+      : typeof raw.prob_penipuan === "number"
+        ? raw.prob_penipuan
+        : 0;
+  const score = Number.isFinite(rawScore)
+    ? Math.min(1, Math.max(0, rawScore))
+    : 0;
+
+  // Handle indicators baik bentuk array of object ({ keterangan }) maupun array of string
+  const indicators: string[] = Array.isArray(raw.indicators)
+    ? raw.indicators
+        .map((item) => {
+          if (typeof item === "string") return item.trim();
+          if (item && typeof item === "object") {
+            return (item.keterangan ?? item.kode ?? "").trim();
+          }
+          return "";
+        })
+        .filter(Boolean)
+    : [];
+
+  // Handle advice baik array of string maupun single string, dengan fallback sesuai label
+  let recommendation = "";
+  if (Array.isArray(raw.advice)) {
+    recommendation = raw.advice
+      .filter((item): item is string => typeof item === "string")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .join(" ");
+  } else if (typeof raw.advice === "string") {
+    recommendation = raw.advice.trim();
+  }
+
+  if (!recommendation) {
+    recommendation = DEFAULT_RECOMMENDATIONS[label];
+  }
+
+  return {
+    label,
+    score,
+    model_version:
+      typeof raw.model_version === "string" && raw.model_version.trim()
+        ? raw.model_version.trim()
+        : "unknown",
+    indicators,
+    recommendation,
+  };
+}
+
 // Rule-based mock sederhana untuk simulasi sebelum FastAPI siap
 function runMockAnalysis(text: string): PredictTextResponse {
   const lower = text.toLowerCase();
@@ -41,8 +133,7 @@ function runMockAnalysis(text: string): PredictTextResponse {
       score: 0.91,
       model_version: "mock-rule-v0.1",
       indicators,
-      recommendation:
-        "Jangan mentransfer uang, mengklik tautan, atau membagikan kode OTP. Verifikasi pengirim melalui saluran resmi.",
+      recommendation: DEFAULT_RECOMMENDATIONS.SCAM,
     };
   }
 
@@ -52,8 +143,7 @@ function runMockAnalysis(text: string): PredictTextResponse {
       score: 0.58,
       model_version: "mock-rule-v0.1",
       indicators,
-      recommendation:
-        "Pesan mengandung indikasi mencurigakan. Periksa ulang identitas pengirim sebelum menindaklanjuti.",
+      recommendation: DEFAULT_RECOMMENDATIONS.UNCERTAIN,
     };
   }
 
@@ -62,8 +152,7 @@ function runMockAnalysis(text: string): PredictTextResponse {
     score: 0.87,
     model_version: "mock-rule-v0.1",
     indicators: [],
-    recommendation:
-      "Tidak ditemukan pola penipuan umum, namun tetap berhati-hati terhadap permintaan data pribadi.",
+    recommendation: DEFAULT_RECOMMENDATIONS.NORMAL,
   };
 }
 
@@ -72,7 +161,7 @@ export async function predictTextAI(
   requestId?: string,
 ): Promise<PredictTextResponse> {
   if (env.USE_MOCK_AI) {
-    await new Promise((r) => setTimeout(r, 300)); // Simulasi latency jaringan
+    await new Promise((r) => setTimeout(r, 300));
     return runMockAnalysis(text);
   }
 
@@ -80,9 +169,11 @@ export async function predictTextAI(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...(env.AI_API_KEY ? { "X-API-Key": env.AI_API_KEY } : {}),
       ...(requestId ? { "x-request-id": requestId } : {}),
     },
-    body: JSON.stringify({ text }),
+    // Default MAX_CHARS di service AI = 2000, potong aman biar nggak kena 422
+    body: JSON.stringify({ text: text.trim().slice(0, 2000) }),
     signal: AbortSignal.timeout(10_000),
   });
 
@@ -90,13 +181,14 @@ export async function predictTextAI(
     throw new Error(`AI API returned HTTP ${res.status}`);
   }
 
-  return (await res.json()) as PredictTextResponse;
+  const raw = (await res.json()) as RawAiPredictResponse;
+  return mapAiResponse(raw ?? {});
 }
 
 export async function predictDocumentAI(
   file: File,
-  maxPages: number,
-  requestId?: string,
+  _maxPages: number,
+  _requestId?: string,
 ): Promise<PredictDocumentResponse> {
   if (env.USE_MOCK_AI) {
     await new Promise((r) => setTimeout(r, 600));
@@ -112,6 +204,11 @@ export async function predictDocumentAI(
     };
   }
 
+  // Endpoint /predict-document belum diimplementasikan oleh tim AI
+  throw new Error("Fitur pemeriksaan dokumen sementara dinonaktifkan.");
+}
+
+/*
   const formData = new FormData();
   formData.append("file", file);
   formData.append("max_pages", String(maxPages));
@@ -119,6 +216,7 @@ export async function predictDocumentAI(
   const res = await fetch(`${env.AI_API_URL}/predict-document`, {
     method: "POST",
     headers: {
+      ...(env.AI_API_KEY ? { "X-API-Key": env.AI_API_KEY } : {}),
       ...(requestId ? { "x-request-id": requestId } : {}),
     },
     body: formData,
@@ -135,4 +233,4 @@ export async function predictDocumentAI(
   }
 
   return (await res.json()) as PredictDocumentResponse;
-}
+  */
