@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { AuthProvider } from "@/components/auth-context";
 import { Toaster } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -33,14 +34,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       )}
     >
       <body className="flex min-h-full flex-col">
-        <TRPCReactProvider>
-          <AuthProvider>
-            <TooltipProvider>
-              {children}
-              <Toaster />
-            </TooltipProvider>
-          </AuthProvider>
-        </TRPCReactProvider>
+        <NuqsAdapter>
+          <TRPCReactProvider>
+            <AuthProvider>
+              <TooltipProvider>
+                {children}
+                <Toaster />
+              </TooltipProvider>
+            </AuthProvider>
+          </TRPCReactProvider>
+        </NuqsAdapter>
       </body>
     </html>
   );

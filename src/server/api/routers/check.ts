@@ -1,6 +1,13 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import {
+  DEFAULT_PAGE,
+  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+  MIN_PAGE_SIZE,
+} from "@/constants";
+import type { Prisma } from "@/generated/prisma/client";
+import {
   type PredictTextResponse,
   predictTextAI,
 } from "@/server/services/ai-client";
@@ -10,13 +17,11 @@ import {
   protectedProcedure,
 } from "@/trpc/init";
 
-interface FastAPIPredictResponse {
-  label: "SCAM" | "NORMAL" | "UNCERTAIN";
-  score: number;
-  model_version: string;
-  indicators: string[];
-  recommendation: string;
-}
+const STATUS_MAP = {
+  penipuan: "SCAM",
+  normal: "NORMAL",
+  "belum-pasti": "UNCERTAIN",
+} as const;
 
 export const checkRouter = createTRPCRouter({
   // Pemeriksaan teks pesan (dapat diakses tamu maupun pengguna login)[cite: 16]
@@ -121,29 +126,79 @@ export const checkRouter = createTRPCRouter({
   getMyHistory: protectedProcedure
     .input(
       z.object({
-        limit: z.number().min(1).max(50).default(10),
-        cursor: z.string().optional(),
+        page: z.number().min(1).default(DEFAULT_PAGE),
+        limit: z
+          .number()
+          .min(MIN_PAGE_SIZE)
+          .max(MAX_PAGE_SIZE)
+          .default(DEFAULT_PAGE_SIZE),
+        search: z.string().optional().default(""),
+        type: z.enum(["semua", "teks", "dokumen"]).default("semua"),
+        status: z
+          .enum(["semua", "penipuan", "normal", "belum-pasti"])
+          .default("semua"),
       }),
     )
     .query(async ({ ctx, input }) => {
-      const items = await ctx.prisma.check.findMany({
-        where: { userId: ctx.session.user.id, deletedAt: null },
-        take: input.limit + 1,
-        cursor: input.cursor ? { id: input.cursor } : undefined,
-        orderBy: { createdAt: "desc" },
-        include: {
-          document: { select: { fileName: true, mimeType: true } },
-          report: { select: { id: true, status: true } },
-        },
-      });
+      const { page, limit, search, type, status } = input;
+      const skip = (page - 1) * limit;
 
-      let nextCursor: string | undefined;
-      if (items.length > input.limit) {
-        const nextItem = items.pop();
-        nextCursor = nextItem?.id;
-      }
+      const where: Prisma.CheckWhereInput = {
+        userId: ctx.session.user.id,
+        deletedAt: null,
+        ...(type !== "semua" && {
+          document: type === "dokumen" ? { isNot: null } : { is: null },
+        }),
+        ...(status !== "semua" && {
+          predictionLabel: STATUS_MAP[status],
+        }),
+        ...(search && {
+          OR: [
+            { content: { contains: search, mode: "insensitive" } },
+            {
+              document: {
+                fileName: { contains: search, mode: "insensitive" },
+              },
+            },
+          ],
+        }),
+      };
 
-      return { items, nextCursor };
+      const [items, totalCount] = await Promise.all([
+        ctx.prisma.check.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: { createdAt: "desc" },
+          include: {
+            document: {
+              select: {
+                id: true,
+                fileName: true,
+                mimeType: true,
+                extractedText: true,
+              },
+            },
+            report: {
+              select: {
+                id: true,
+                status: true,
+              },
+            },
+          },
+        }),
+        ctx.prisma.check.count({ where }),
+      ]);
+
+      const totalPages = Math.max(1, Math.ceil(totalCount / limit));
+
+      return {
+        items,
+        totalCount,
+        totalPages,
+        page,
+        limit,
+      };
     }),
 
   // Hapus riwayat pribadi (soft delete + bersihkan isi pesan)
