@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { LuChevronsUpDown, LuPlus } from "react-icons/lu";
+import { LuPlus } from "react-icons/lu";
 import {
   Accordion,
   AccordionContent,
@@ -13,21 +12,26 @@ const FAQ_ITEMS = [
   {
     id: "item-1",
     question: "Bagaimana cara kerja deteksi penipuan di AntiScamID?",
+    // answer:
+    //   "AntiScamID menggunakan model AI yang dilatih untuk mengenali pola rekayasa sosial, urgensi palsu, tautan mencurigakan, serta struktur penipuan yang umum beredar dalam bahasa Indonesia—baik melalui teks pesan maupun dokumen.",
     answer:
-      "AntiScamID menggunakan model AI yang dilatih untuk mengenali pola rekayasa sosial, urgensi palsu, tautan mencurigakan, serta struktur penipuan yang umum beredar dalam bahasa Indonesia—baik melalui teks pesan maupun dokumen.",
+      "AntiScamID menggunakan model AI yang dilatih untuk mengenali pola rekayasa sosial, urgensi palsu, tautan mencurigakan, serta struktur penipuan yang umum beredar dalam bahasa Indonesia.",
   },
   {
     id: "item-2",
-    question: "Apakah pesan dan dokumen yang saya unggah aman?",
+    // question: "Apakah pesan dan dokumen yang saya unggah aman?",
+    // answer:
+    //   "Ya. Pemeriksaan dilakukan hanya untuk keperluan analisis. Namun, kami tetap menyarankan Anda menyensor informasi pribadi sensitif seperti NIK, nomor rekening, atau kode OTP sebelum mengunggah dokumen.",
+    question: "Apakah pesan yang saya periksa aman?",
     answer:
-      "Ya. Pemeriksaan dilakukan hanya untuk keperluan analisis. Namun, kami tetap menyarankan Anda menyensor informasi pribadi sensitif seperti NIK, nomor rekening, atau kode OTP sebelum mengunggah dokumen.",
+      "Ya. Pemeriksaan dilakukan hanya untuk keperluan analisis. Namun, kami tetap menyarankan Anda menyensor informasi pribadi sensitif seperti NIK, nomor rekening, atau kode OTP sebelum melakukan pemeriksaan.",
   },
-  {
-    id: "item-3",
-    question: "Format dokumen apa saja yang didukung untuk pemeriksaan?",
-    answer:
-      "Anda dapat mengunggah file berformat PDF, JPG, dan PNG dengan ukuran maksimal 5 MB (hingga 5 halaman untuk dokumen PDF). Sistem akan mengekstrak teks secara otomatis sebelum menganalisisnya.",
-  },
+  // {
+  //   id: "item-3",
+  //   question: "Format dokumen apa saja yang didukung untuk pemeriksaan?",
+  //   answer:
+  //     "Anda dapat mengunggah file berformat PDF, JPG, dan PNG dengan ukuran maksimal 5 MB (hingga 5 halaman untuk dokumen PDF). Sistem akan mengekstrak teks secara otomatis sebelum menganalisisnya.",
+  // },
   {
     id: "item-4",
     question: "Apakah hasil analisis AI menjamin 100% kebenaran?",
@@ -37,24 +41,14 @@ const FAQ_ITEMS = [
   {
     id: "item-5",
     question: "Apakah saya harus login untuk menggunakan AntiScamID?",
+    // answer:
+    //   "Tidak wajib. Pemeriksaan pesan dan dokumen dapat digunakan langsung tanpa akun. Login dengan Google hanya diperlukan jika Anda ingin menyimpan riwayat pemeriksaan dan mengirim laporan kasus penipuan.",
     answer:
-      "Tidak wajib. Pemeriksaan pesan dan dokumen dapat digunakan langsung tanpa akun. Login dengan Google hanya diperlukan jika Anda ingin menyimpan riwayat pemeriksaan dan mengirim laporan kasus penipuan.",
+      "Tidak wajib. Pemeriksaan pesan dapat digunakan langsung tanpa akun. Login dengan Google hanya diperlukan jika Anda ingin menyimpan riwayat pemeriksaan dan mengirim laporan kasus penipuan.",
   },
 ];
 
 export function FaqSection() {
-  const [openItems, setOpenItems] = useState<string[]>([]);
-
-  const isAllExpanded = openItems.length === FAQ_ITEMS.length;
-
-  const handleToggleAll = () => {
-    if (isAllExpanded) {
-      setOpenItems([]);
-    } else {
-      setOpenItems(FAQ_ITEMS.map((item) => item.id));
-    }
-  };
-
   return (
     <section className="container mx-auto max-w-4xl px-4 py-20 sm:px-6 sm:py-24">
       {/* Judul Tengah */}
@@ -62,25 +56,8 @@ export function FaqSection() {
         Pertanyaan umum (FAQ)
       </h2>
 
-      {/* Tombol Luaskan Semua */}
-      <div className="mt-8 mb-4 flex justify-end">
-        <button
-          type="button"
-          onClick={handleToggleAll}
-          className="inline-flex cursor-pointer items-center gap-1.5 font-medium text-primary text-sm transition-opacity hover:opacity-80"
-        >
-          <span>{isAllExpanded ? "Tutup semua" : "Luaskan semua"}</span>
-          <LuChevronsUpDown className="h-4 w-4" />
-        </button>
-      </div>
-
       {/* Daftar Accordion Pill */}
-      <Accordion
-        multiple
-        value={openItems}
-        onValueChange={setOpenItems}
-        className="space-y-3.5"
-      >
+      <Accordion multiple className="mt-16 space-y-3.5">
         {FAQ_ITEMS.map((item) => (
           <AccordionItem
             key={item.id}

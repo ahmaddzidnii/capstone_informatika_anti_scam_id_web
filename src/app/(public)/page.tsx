@@ -5,6 +5,9 @@ import { FaqSection } from "@/components/faq-section";
 import { LandingAnimator } from "@/components/landing-animator";
 import { Button } from "@/components/ui/button";
 
+const TELEGRAM_BOT_URL =
+  process.env.NEXT_PUBLIC_TELEGRAM_BOT_URL || "https://t.me/antiscamid_dev_bot";
+
 export default function Home() {
   return (
     <LandingAnimator>
@@ -24,7 +27,9 @@ export default function Home() {
                 </strong>{" "}
                 untuk cek instan.{" "}
                 <Link
-                  href="#"
+                  href={TELEGRAM_BOT_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-flex items-center gap-0.5 font-semibold text-primary hover:underline sm:hidden"
                 >
                   <span>Buka Bot</span>
@@ -34,7 +39,9 @@ export default function Home() {
             </div>
 
             <Link
-              href="#"
+              href={TELEGRAM_BOT_URL}
+              target="_blank"
+              rel="noopener noreferrer"
               className="hidden shrink-0 items-center gap-1 font-semibold text-primary hover:underline sm:inline-flex"
             >
               <span>Buka Bot</span>
@@ -49,15 +56,18 @@ export default function Home() {
             data-animate="hero"
             className="mx-auto max-w-3xl font-bold text-4xl tracking-tight sm:text-5xl lg:text-[56px] lg:leading-[1.1]"
           >
-            Periksa pesan dan dokumen dari indikasi penipuan
+            {/* Periksa pesan dan dokumen dari indikasi penipuan */}
+            Periksa pesan mencurigakan dari indikasi penipuan
           </h1>
 
           <p
             data-animate="hero"
             className="mx-auto mt-5 max-w-2xl text-base text-muted-foreground sm:text-lg"
           >
-            Analisis teks pesan, tautan mencurigakan, serta dokumen PDF atau
-            gambar berbahasa Indonesia dalam hitungan detik.
+            {/* Analisis teks pesan, tautan mencurigakan, serta dokumen PDF atau
+            gambar berbahasa Indonesia dalam hitungan detik. */}
+            Analisis teks pesan dan tautan mencurigakan berbahasa Indonesia
+            dalam hitungan detik.
           </p>
 
           <div
@@ -70,13 +80,13 @@ export default function Home() {
               nativeButton={false}
               render={<Link href="/deteksi-pesan">Periksa Pesan</Link>}
             />
-            <Button
+            {/* <Button
               size="lg"
               variant="outline"
               className="h-11 rounded-full bg-card px-7 font-semibold text-sm"
               nativeButton={false}
               render={<Link href="/deteksi-dokumen">Unggah Dokumen</Link>}
-            />
+            /> */}
           </div>
         </section>
 
@@ -133,7 +143,7 @@ export default function Home() {
             </div>
 
             {/* Floating Right App Card */}
-            <div
+            {/* <div
               data-animate="collage-side"
               className="relative z-10 -ml-10 hidden w-60 shrink-0 md:block lg:-ml-14 lg:w-68"
             >
@@ -157,7 +167,7 @@ export default function Home() {
                   </p>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
         </section>
 
@@ -172,7 +182,9 @@ export default function Home() {
                 Lihat cara kerja pengujian sistem
               </h2>
               <p className="mt-3 text-muted-foreground text-sm sm:text-base">
-                Simulasi pemeriksaan pesan penipuan, pembacaan teks dokumen, dan
+                {/* Simulasi pemeriksaan pesan penipuan, pembacaan teks dokumen, dan
+                pelaporan kasus. */}
+                Simulasi pemeriksaan pesan penipuan, analisis indikator, dan
                 pelaporan kasus.
               </p>
             </div>
@@ -229,7 +241,7 @@ export default function Home() {
           </div>
 
           {/* Blok 2 */}
-          <div
+          {/* <div
             data-animate="reveal"
             className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-16"
           >
@@ -261,7 +273,7 @@ export default function Home() {
                 </Link>
               </div>
             </div>
-          </div>
+          </div> */}
         </section>
 
         {/* 6. FAQ SECTION */}
