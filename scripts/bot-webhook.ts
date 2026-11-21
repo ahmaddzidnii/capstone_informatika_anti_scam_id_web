@@ -3,7 +3,17 @@ import { env } from "@/env";
 import { bot } from "@/server/telegram/bot";
 
 const action = process.argv[2] ?? "set";
-const webhookUrl = `${env.BETTER_AUTH_URL.replace(/\/$/, "")}/api/telegram/webhook`;
+const customUrlArg = process.argv
+  .find((arg) => arg.startsWith("--url="))
+  ?.split("=")[1];
+
+const baseUrl = (
+  customUrlArg ??
+  env.TELEGRAM_WEBHOOK_URL ??
+  env.BETTER_AUTH_URL
+).replace(/\/$/, "");
+
+const webhookUrl = `${baseUrl}/api/telegram/webhook`;
 
 async function main() {
   if (action === "info") {

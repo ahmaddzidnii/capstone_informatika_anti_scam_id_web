@@ -18,6 +18,7 @@ export const env = createEnv({
       .transform((v) => v === "true"),
     AI_API_URL: z.url().optional(),
     AI_API_KEY: z.string().optional(),
+    TELEGRAM_WEBHOOK_URL: z.string().url().optional(),
   },
 
   client: {
