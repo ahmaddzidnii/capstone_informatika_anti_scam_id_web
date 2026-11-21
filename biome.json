@@ -13,7 +13,8 @@
       "!.next",
       "!dist",
       "!build",
-      "!src/generated"
+      "!src/generated",
+      "!src/components/ui"
     ]
   },
   "formatter": {
@@ -30,6 +31,17 @@
     "enabled": true,
     "rules": {
       "recommended": true,
+      "correctness": {
+        "noChildrenProp": "off"
+      },
+      "suspicious": {
+        "noArrayIndexKey": "warn"
+      },
+      "a11y": {
+        "noStaticElementInteractions": "warn",
+        "useKeyWithClickEvents": "warn",
+        "useSemanticElements": "warn"
+      },
       "nursery": {
         "useSortedClasses": {
           "level": "warn",

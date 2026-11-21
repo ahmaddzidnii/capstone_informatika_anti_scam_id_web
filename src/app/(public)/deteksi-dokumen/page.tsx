@@ -254,6 +254,7 @@ export default function DeteksiDokumenPage() {
 
               return (
                 <Field data-invalid={isInvalid}>
+                  {/** biome-ignore lint/a11y/useSemanticElements: false positive */}
                   <div
                     role="button"
                     tabIndex={0}

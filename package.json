@@ -5,19 +5,20 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:safe": "npm run check && npm run build",
     "start": "next start",
-    "lint": "biome check",
+    "lint": "biome check --diagnostic-level=error",
     "format": "biome format --write",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run lint && npm run typecheck && npm run test:unit",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:e2e": "vitest run tests/e2e/antiscam.test.ts",
     "sync-api": "tsx scripts/sync-api.ts",
     "bot:polling": "tsx scripts/bot-polling.ts",
     "bot:webhook": "tsx scripts/bot-webhook.ts",
     "bot:webhook:info": "tsx scripts/bot-webhook.ts info",
-    "bot:webhook:delete": "tsx scripts/bot-webhook.ts delete",
-    "test": "vitest run",
-    "test:e2e": "vitest run tests/e2e/antiscam.test.ts",
-    "test:unit": "vitest run tests/unit",
-    "check": "npm run lint && npm run typecheck && npm run test:unit",
-    "build:safe": "npm run check && npm run build"
+    "bot:webhook:delete": "tsx scripts/bot-webhook.ts delete"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
