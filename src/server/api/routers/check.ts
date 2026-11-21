@@ -5,7 +5,7 @@ import {
     baseProcedure,
     protectedProcedure,
 } from "@/trpc/init";
-import { env } from '@/env';
+
 import { predictTextAI, PredictTextResponse } from '@/server/services/ai-client';
 
 interface FastAPIPredictResponse {

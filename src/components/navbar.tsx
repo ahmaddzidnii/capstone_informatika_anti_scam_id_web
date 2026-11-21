@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { LuLogIn } from "react-icons/lu";
 import { Logo } from "@/components/logo";
-import { Button } from "@/components/ui/button";
+import { UserButton } from "@/components/user-button";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
@@ -18,8 +17,6 @@ export function Navbar() {
 
       setIsScrolled(currentScrollY > 10);
 
-      // Sembunyikan saat scroll ke bawah melewati tinggi navbar (64px),
-      // munculkan kembali saat scroll ke atas
       if (currentScrollY > lastScrollY.current && currentScrollY > 64) {
         setIsVisible(false);
       } else if (currentScrollY < lastScrollY.current) {
@@ -72,17 +69,7 @@ export function Navbar() {
           </Link>
         </nav>
 
-        <Button
-          size="sm"
-          className="gap-2 px-4 font-medium shadow-xs"
-          nativeButton={false}
-          render={
-            <Link href="/login">
-              <LuLogIn className="h-4 w-4" />
-              <span>Masuk</span>
-            </Link>
-          }
-        />
+        <UserButton />
       </div>
     </header>
   );

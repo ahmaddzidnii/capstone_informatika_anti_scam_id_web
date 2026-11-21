@@ -172,26 +172,29 @@ export const adminRouter = createTRPCRouter({
                 reportStatusGroups,
                 modusGroups,
                 recentChecks,
-            ] = await ctx.prisma.$transaction([
-                // Kelompok 1: Statistik Pemeriksaan[cite: 10]
+            ] = await Promise.all([
+                // Kelompok 1: Statistik Pemeriksaan
                 ctx.prisma.check.groupBy({
                     by: ['predictionLabel'],
                     where: { deletedAt: null },
                     _count: { _all: true },
+                    orderBy: { predictionLabel: 'asc' },
                 }),
-                // Kelompok 2: Statistik Laporan[cite: 10]
+                // Kelompok 2: Statistik Laporan
                 ctx.prisma.report.groupBy({
                     by: ['status'],
                     where: { deletedAt: null },
                     _count: { _all: true },
+                    orderBy: { status: 'asc' },
                 }),
-                // Kelompok 3: Statistik Modus[cite: 10]
+                // Kelompok 3: Statistik Modus
                 ctx.prisma.report.groupBy({
                     by: ['suspectedModus'],
                     where: { deletedAt: null },
                     _count: { _all: true },
+                    orderBy: { suspectedModus: 'asc' },
                 }),
-                // Kelompok 4: Data grafik tren harian[cite: 10]
+                // Kelompok 4: Data grafik tren harian
                 ctx.prisma.check.findMany({
                     where: { deletedAt: null, createdAt: { gte: sinceDate } },
                     select: { createdAt: true, predictionLabel: true },

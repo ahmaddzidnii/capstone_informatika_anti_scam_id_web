@@ -1,50 +1,141 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
-import { LuFileText, LuLoaderCircle, LuShieldAlert, LuUpload, LuX } from "react-icons/lu";
+import { useEffect, useRef, useState } from "react";
+import { useForm } from "@tanstack/react-form";
+import { useMutation } from "@tanstack/react-query";
+import { LuCheck, LuFileText, LuLoaderCircle, LuShieldAlert, LuUpload, LuX } from "react-icons/lu";
+import * as z from "zod";
+
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { toast } from "@/components/ui/toast";
+import { useTRPC } from "@/trpc/client";
+
+const MAX_FILE_SIZE_MB = 5;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+const ALLOWED_MIME_TYPES = ["application/pdf", "image/jpeg", "image/png"] as const;
+const ALLOWED_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png"];
+
+const documentFormSchema = z.object({
+  file: z
+    .custom<File | null>((val) => val instanceof File, {
+      message: "Silakan pilih dokumen atau gambar terlebih dahulu.",
+    })
+    .superRefine((file, ctx) => {
+      if (!(file instanceof File)) return;
+
+      if (file.size === 0) {
+        ctx.addIssue({
+          code: "custom",
+          message: "File kosong atau rusak. Silakan pilih file lain.",
+        });
+        return;
+      }
+
+      const fileName = file.name.toLowerCase();
+      const hasValidExtension = ALLOWED_EXTENSIONS.some((ext) => fileName.endsWith(ext));
+      const hasValidMime = ALLOWED_MIME_TYPES.includes(file.type as (typeof ALLOWED_MIME_TYPES)[number]);
+
+      if (!hasValidMime && !hasValidExtension) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Format tidak didukung. Gunakan file PDF, JPG, atau PNG.",
+        });
+      }
+
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Ukuran file terlalu besar (maksimal ${MAX_FILE_SIZE_MB} MB).`,
+        });
+      }
+    }),
+  consentAccepted: z.boolean().refine((val) => val === true, {
+    message: "Persetujuan pemrosesan dokumen wajib dicentang.",
+  }),
+  keepForReport: z.boolean(),
+});
+
+const DOCUMENT_ANALYSIS_STEPS = [
+  { threshold: 0, label: "Memvalidasi struktur & metadata berkas..." },
+  { threshold: 30, label: "Mengekstrak teks & elemen visual (OCR)..." },
+  { threshold: 65, label: "Mendeteksi pola pemalsuan & rekayasa sosial..." },
+  { threshold: 88, label: "Menyusun skor risiko & kesimpulan..." },
+];
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
 
 export default function DeteksiDokumenPage() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [progress, setProgress] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (file: File | undefined) => {
-    if (!file) return;
-    setSelectedFile(file);
-  };
+  const trpc = useTRPC();
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    handleFileChange(file);
-  };
+  const mutation = useMutation({
+    ...trpc.document.screenDocument.mutationOptions(),
+  });
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024 * 1024) {
-      return `${(bytes / 1024).toFixed(1)} KB`;
+  const form = useForm({
+    defaultValues: {
+      file: null as File | null,
+      consentAccepted: false,
+      keepForReport: false,
+    },
+    validators: {
+      onSubmit: documentFormSchema,
+    },
+    onSubmit: async ({ value }) => {
+      if (!value.file) return;
+
+      const formData = new FormData();
+      formData.append("file", value.file);
+      formData.append("consentAccepted", String(value.consentAccepted));
+      formData.append("keepForReport", String(value.keepForReport));
+
+      mutation.mutate(formData, {
+        onSuccess: (data) => {
+          router.push(`/checks/${data.id}/results`);
+        },
+        onError: (error) => {
+          toast.add({
+            title: "Terjadi kesalahan saat memproses dokumen",
+            description: error.message || "Silakan coba beberapa saat lagi.",
+            type: "error",
+          });
+        },
+      });
+    },
+  });
+
+  useEffect(() => {
+    if (!mutation.isPending) {
+      setProgress(0);
+      return;
     }
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
 
-  const handleAnalyze = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      router.push("/checks/102/results?type=dokumen");
-    }, 1200);
-  };
+    setProgress(10);
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 95) return 95;
+        const remaining = 95 - prev;
+        const step = Math.max(1, Math.round(remaining * (Math.random() * 0.16 + 0.06)));
+        return Math.min(95, prev + step);
+      });
+    }, 450);
 
-  const handleReset = () => {
-    setSelectedFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
+    return () => clearInterval(interval);
+  }, [mutation.isPending]);
+
+  const currentStep = [...DOCUMENT_ANALYSIS_STEPS].reverse().find((s) => progress >= s.threshold) ?? DOCUMENT_ANALYSIS_STEPS[0];
 
   return (
     <div className="container mx-auto max-w-2xl px-4 py-12 sm:px-6 sm:py-16 space-y-6">
@@ -64,7 +155,7 @@ export default function DeteksiDokumenPage() {
             <div className="space-y-1">
               <h2 className="text-sm font-bold tracking-tight text-foreground">Sensor Data Sensitif Sebelum Mengunggah</h2>
               <p className="text-xs leading-relaxed text-muted-foreground sm:text-sm">
-                Dokumen diproses oleh AI untuk ekstraksi teks. Pastikan Anda telah menutupi informasi pribadi berikut:
+                Pastikan Anda telah menutupi informasi pribadi berikut sebelum memulai ekstraksi teks:
               </p>
             </div>
 
@@ -82,86 +173,280 @@ export default function DeteksiDokumenPage() {
         </div>
       </div>
 
-      {/* Upload Area (Drag & Drop) */}
-      <div
-        onDragOver={(e) => {
+      {/* Form Upload & Persetujuan */}
+      <form
+        id="analyze-document-form"
+        onSubmit={(e) => {
           e.preventDefault();
-          setIsDragging(true);
+          form.handleSubmit();
         }}
-        onDragLeave={() => setIsDragging(false)}
-        onDrop={handleDrop}
-        onClick={() => fileInputRef.current?.click()}
-        className={`cursor-pointer rounded-xl border-2 border-dashed p-10 text-center transition-colors ${
-          isDragging ? "border-primary bg-muted/70" : "border-muted-foreground/30 hover:border-foreground/50 hover:bg-muted/30"
-        }`}
+        className="space-y-5"
       >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".pdf,.jpg,.jpeg,.png"
-          className="hidden"
-          onChange={(e) => handleFileChange(e.target.files?.[0])}
-        />
+        <FieldGroup className="space-y-4">
+          {/* Field 1: File Dropzone */}
+          <form.Field
+            name="file"
+            validators={{
+              onChange: documentFormSchema.shape.file,
+            }}
+            children={(field) => {
+              const selectedFile = field.state.value;
+              const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
 
-        {!selectedFile ? (
-          <div className="flex flex-col items-center space-y-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg border bg-background">
-              <LuUpload className="h-6 w-6 text-foreground" />
-            </div>
-            <div className="space-y-1">
-              <p className="text-base font-semibold">Tarik &amp; lepas file di sini, atau cari file</p>
-              <p className="text-xs text-muted-foreground">Hanya PDF, JPG, PNG | Maksimal 5 MB, Maksimal 5 Halaman</p>
-            </div>
+              const selectFile = (file: File | undefined) => {
+                if (!file) return;
+                field.handleChange(file);
+                field.handleBlur();
+              };
+
+              const clearFile = () => {
+                field.handleChange(null);
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = "";
+                }
+              };
+
+              return (
+                <Field data-invalid={isInvalid}>
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    aria-invalid={isInvalid}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        fileInputRef.current?.click();
+                      }
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      if (!mutation.isPending) setIsDragging(true);
+                    }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsDragging(false);
+                      if (mutation.isPending) return;
+                      selectFile(e.dataTransfer.files?.[0]);
+                    }}
+                    onClick={() => {
+                      if (!mutation.isPending) fileInputRef.current?.click();
+                    }}
+                    className={`cursor-pointer rounded-xl border-2 border-dashed p-10 text-center transition-colors ${
+                      isInvalid
+                        ? "border-destructive bg-destructive/5"
+                        : isDragging
+                          ? "border-primary bg-muted/70"
+                          : "border-muted-foreground/30 hover:border-foreground/50 hover:bg-muted/30"
+                    } ${mutation.isPending ? "pointer-events-none opacity-60" : ""}`}
+                  >
+                    <input
+                      ref={fileInputRef}
+                      id={field.name}
+                      name={field.name}
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      className="hidden"
+                      disabled={mutation.isPending}
+                      onChange={(e) => selectFile(e.target.files?.[0])}
+                    />
+
+                    {!selectedFile ? (
+                      <div className="flex flex-col items-center space-y-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg border bg-background">
+                          <LuUpload className="h-6 w-6 text-foreground" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-base font-semibold">Tarik &amp; lepas file di sini, atau cari file</p>
+                          <p className="text-xs text-muted-foreground">Hanya PDF, JPG, PNG | Maksimal {MAX_FILE_SIZE_MB} MB, Maksimal 5 Halaman</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        className={`mx-auto flex max-w-md items-center justify-between gap-3 rounded-lg border bg-background p-3 text-left ${
+                          isInvalid ? "border-destructive/50" : ""
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 overflow-hidden">
+                          <div
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${
+                              isInvalid ? "bg-destructive/10 text-destructive" : "bg-muted text-foreground"
+                            }`}
+                          >
+                            <LuFileText className="h-5 w-5" />
+                          </div>
+                          <div className="truncate">
+                            <p className="truncate text-sm font-medium">{selectedFile.name}</p>
+                            <p className="text-xs text-muted-foreground tabular-nums">{formatFileSize(selectedFile.size)}</p>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          disabled={mutation.isPending}
+                          onClick={clearFile}
+                          aria-label="Hapus file"
+                        >
+                          <LuX className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                </Field>
+              );
+            }}
+          />
+
+          {/* Box Persetujuan & Retensi Data */}
+          <div className="rounded-xl border bg-card p-4 space-y-4">
+            {/* Field 2: Consent Wajib */}
+            <form.Field
+              name="consentAccepted"
+              validators={{
+                onChange: documentFormSchema.shape.consentAccepted,
+              }}
+              children={(field) => {
+                const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        id={field.name}
+                        checked={Boolean(field.state.value)}
+                        disabled={mutation.isPending}
+                        aria-invalid={isInvalid}
+                        onCheckedChange={(checked) => {
+                          field.handleChange(checked === true);
+                          field.handleBlur();
+                        }}
+                        className="mt-0.5"
+                      />
+                      <div className="space-y-1 leading-snug">
+                        <FieldLabel
+                          htmlFor={field.name}
+                          className="text-sm font-medium cursor-pointer"
+                        >
+                          Saya menyetujui pemrosesan dokumen ini untuk analisis keamanan <span className="text-destructive">*</span>
+                        </FieldLabel>
+                        <FieldDescription className="text-xs">
+                          File fisik tidak disimpan secara permanen di server setelah ekstraksi selesai.
+                        </FieldDescription>
+                      </div>
+                    </div>
+                    {isInvalid && (
+                      <FieldError
+                        errors={field.state.meta.errors}
+                        className="pl-7"
+                      />
+                    )}
+                  </Field>
+                );
+              }}
+            />
+
+            <div className="border-t" />
+
+            {/* Field 3: Keep For Report (Opsional) */}
+            <form.Field
+              name="keepForReport"
+              children={(field) => (
+                <Field>
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id={field.name}
+                      checked={Boolean(field.state.value)}
+                      disabled={mutation.isPending}
+                      onCheckedChange={(checked) => field.handleChange(checked === true)}
+                      className="mt-0.5"
+                    />
+                    <div className="space-y-1 leading-snug">
+                      <FieldLabel
+                        htmlFor={field.name}
+                        className="text-sm font-medium cursor-pointer"
+                      >
+                        Simpan teks hasil ekstraksi sementara untuk pelaporan
+                      </FieldLabel>
+                      <FieldDescription className="text-xs">
+                        Jika tidak dicentang, teks hasil ekstraksi akan langsung dihapus setelah analisis selesai.
+                      </FieldDescription>
+                    </div>
+                  </div>
+                </Field>
+              )}
+            />
           </div>
-        ) : (
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="mx-auto flex max-w-md items-center justify-between gap-3 rounded-lg border bg-background p-3 text-left"
-          >
-            <div className="flex items-center gap-3 overflow-hidden">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted">
-                <LuFileText className="h-5 w-5 text-foreground" />
-              </div>
-              <div className="truncate">
-                <p className="truncate text-sm font-medium">{selectedFile.name}</p>
-                <p className="text-xs text-muted-foreground">{formatFileSize(selectedFile.size)}</p>
-              </div>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={handleReset}
-              aria-label="Hapus file"
-            >
-              <LuX className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
-      </div>
+        </FieldGroup>
 
-      {/* Action Button */}
-      <Button
-        onClick={handleAnalyze}
-        disabled={!selectedFile || isLoading}
-        className="w-full h-11 text-sm font-medium"
-      >
-        Mulai Pengecekan
-      </Button>
+        <Button
+          type="submit"
+          form="analyze-document-form"
+          disabled={mutation.isPending}
+          className="w-full h-11 text-sm font-medium"
+        >
+          Mulai Pengecekan
+        </Button>
+      </form>
 
-      {/* Loading Modal */}
-      <Dialog open={isLoading}>
+      {/* Loading Modal dengan Progress Bar */}
+      <Dialog open={mutation.isPending}>
         <DialogContent
           showCloseButton={false}
-          className="sm:max-w-xs text-center"
+          className="sm:max-w-md"
         >
-          <DialogHeader className="items-center space-y-3 py-4">
-            <LuLoaderCircle className="h-10 w-10 animate-spin text-foreground" />
-            <div className="space-y-1 text-center">
-              <DialogTitle className="text-base font-semibold">Mengekstrak &amp; menganalisis dokumen...</DialogTitle>
-              <DialogDescription className="text-sm">Mohon tunggu</DialogDescription>
+          <DialogHeader className="space-y-1 text-left">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary">
+                <LuShieldAlert className="h-4 w-4" />
+              </div>
+              <div>
+                <DialogTitle className="text-base font-semibold">Memeriksa Keamanan Dokumen</DialogTitle>
+                <DialogDescription className="text-xs">Proses ekstraksi &amp; analisis memakan waktu beberapa detik</DialogDescription>
+              </div>
             </div>
           </DialogHeader>
+
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium text-foreground">{currentStep.label}</span>
+                <span className="font-mono text-muted-foreground tabular-nums">{progress}%</span>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+                <div
+                  className="h-full bg-primary transition-all duration-500 ease-out"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5 rounded-lg border bg-muted/40 p-3 text-xs">
+              {DOCUMENT_ANALYSIS_STEPS.map((step, idx) => {
+                const isDone = progress > (DOCUMENT_ANALYSIS_STEPS[idx + 1]?.threshold ?? 100);
+                const isActive = currentStep.threshold === step.threshold;
+
+                return (
+                  <div
+                    key={step.threshold}
+                    className={`flex items-center gap-2 transition-opacity ${isDone || isActive ? "opacity-100" : "opacity-40"}`}
+                  >
+                    {isDone ? (
+                      <LuCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                    ) : isActive ? (
+                      <LuLoaderCircle className="h-3.5 w-3.5 shrink-0 animate-spin text-primary" />
+                    ) : (
+                      <span className="h-3.5 w-3.5 shrink-0 rounded-full border border-muted-foreground/40" />
+                    )}
+                    <span className={isActive ? "font-medium text-foreground" : "text-muted-foreground"}>{step.label.replace("...", "")}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -4,8 +4,10 @@ import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
+import { TRPCReactProvider } from "@/trpc/client";
+import { AuthProvider } from "@/components/auth-context";
 
-const inter = Inter({subsets:['latin'],variable:'--font-sans'});
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -25,10 +27,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={cn("antialiased", plusJakarta.variable, "font-sans", inter.variable)}
     >
       <body className="min-h-full flex flex-col">
-        <TooltipProvider>
-          {children}
-          <Toaster />
-        </TooltipProvider>
+        <TRPCReactProvider>
+          <AuthProvider>
+            <TooltipProvider>
+              {children}
+              <Toaster />
+            </TooltipProvider>
+          </AuthProvider>
+        </TRPCReactProvider>
       </body>
     </html>
   );
