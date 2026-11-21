@@ -2,7 +2,12 @@
 
 import { useState } from "react";
 import { LuChevronsUpDown, LuPlus } from "react-icons/lu";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const FAQ_ITEMS = [
   {
@@ -53,14 +58,16 @@ export function FaqSection() {
   return (
     <section className="container mx-auto max-w-4xl px-4 py-20 sm:px-6 sm:py-24">
       {/* Judul Tengah */}
-      <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">Pertanyaan umum (FAQ)</h2>
+      <h2 className="text-center font-bold text-3xl tracking-tight sm:text-4xl">
+        Pertanyaan umum (FAQ)
+      </h2>
 
       {/* Tombol Luaskan Semua */}
       <div className="mt-8 mb-4 flex justify-end">
         <button
           type="button"
           onClick={handleToggleAll}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-primary transition-opacity hover:opacity-80 cursor-pointer"
+          className="inline-flex cursor-pointer items-center gap-1.5 font-medium text-primary text-sm transition-opacity hover:opacity-80"
         >
           <span>{isAllExpanded ? "Tutup semua" : "Luaskan semua"}</span>
           <LuChevronsUpDown className="h-4 w-4" />
@@ -80,11 +87,13 @@ export function FaqSection() {
             value={item.id}
             className="rounded-[28px] border border-border bg-card px-6 transition-colors data-[open]:bg-muted/30 data-[state=open]:bg-muted/30 sm:px-8"
           >
-            <AccordionTrigger className="py-5 text-left text-base font-medium hover:no-underline [&>svg:not(.faq-plus)]:hidden [&[data-panel-open]_.faq-plus]:rotate-45 [&[data-state=open]_.faq-plus]:rotate-45">
+            <AccordionTrigger className="py-5 text-left font-medium text-base hover:no-underline [&>svg:not(.faq-plus)]:hidden [&[data-panel-open]_.faq-plus]:rotate-45 [&[data-state=open]_.faq-plus]:rotate-45">
               <span className="pr-4">{item.question}</span>
               <LuPlus className="faq-plus h-5 w-5 shrink-0 text-foreground transition-transform duration-200" />
             </AccordionTrigger>
-            <AccordionContent className="pb-6 text-sm leading-relaxed text-muted-foreground sm:text-base">{item.answer}</AccordionContent>
+            <AccordionContent className="pb-6 text-muted-foreground text-sm leading-relaxed sm:text-base">
+              {item.answer}
+            </AccordionContent>
           </AccordionItem>
         ))}
       </Accordion>

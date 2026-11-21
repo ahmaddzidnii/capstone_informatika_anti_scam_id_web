@@ -8,7 +8,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex min-h-screen flex-col">
       <Navbar />
 
       {/* Main Content */}
@@ -23,11 +23,13 @@ export default function RootLayout({
               <div className="flex items-center gap-2">
                 <Logo />
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Platform pemeriksaan awal berbasis AI untuk membantu masyarakat mengenali indikasi penipuan digital berbahasa Indonesia.
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Platform pemeriksaan awal berbasis AI untuk membantu masyarakat
+                mengenali indikasi penipuan digital berbahasa Indonesia.
               </p>
-              <p className="text-xs text-muted-foreground/80">
-                *Hasil deteksi bersifat analisis awal dan bukan merupakan keputusan hukum atau verifikasi resmi.
+              <p className="text-muted-foreground/80 text-xs">
+                *Hasil deteksi bersifat analisis awal dan bukan merupakan
+                keputusan hukum atau verifikasi resmi.
               </p>
             </div>
 
@@ -88,10 +90,13 @@ export default function RootLayout({
           </div>
 
           {/* Bottom Bar & Capstone Credit */}
-          <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t pt-6 text-xs text-muted-foreground sm:flex-row">
-            <p>&copy; {new Date().getFullYear()} AntiScamID. All rights reserved.</p>
-            <p className="font-medium text-foreground/80 text-center sm:text-right">
-              Capstone Project Kelompok 7 - Informatika UIN Sunan Kalijaga Yogyakarta Angkatan 2023
+          <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t pt-6 text-muted-foreground text-xs sm:flex-row">
+            <p>
+              &copy; {new Date().getFullYear()} AntiScamID. All rights reserved.
+            </p>
+            <p className="text-center font-medium text-foreground/80 sm:text-right">
+              Capstone Project Kelompok 7 - Informatika UIN Sunan Kalijaga
+              Yogyakarta Angkatan 2023
             </p>
           </div>
         </div>

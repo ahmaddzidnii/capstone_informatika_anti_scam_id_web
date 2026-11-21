@@ -40,15 +40,12 @@ export function Navbar() {
     >
       <div className="container mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-8">
-          <Link
-            href="/"
-            aria-label="AntiScamID Beranda"
-          >
+          <Link href="/" aria-label="AntiScamID Beranda">
             <Logo size="md" />
           </Link>
         </div>
 
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
+        <nav className="hidden items-center gap-6 font-medium text-muted-foreground text-sm md:flex">
           <Link
             href="/deteksi-pesan"
             className="transition-colors hover:text-foreground"

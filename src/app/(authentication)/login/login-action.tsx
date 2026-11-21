@@ -54,7 +54,8 @@ export function LoginAction({ callbackURL }: LoginActionProps) {
         toast.add({
           type: "error",
           title: "Autentikasi gagal",
-          description: result.error.message || "Silakan coba beberapa saat lagi.",
+          description:
+            result.error.message || "Silakan coba beberapa saat lagi.",
         });
         setIsLoading(false);
       }
@@ -75,7 +76,11 @@ export function LoginAction({ callbackURL }: LoginActionProps) {
       onClick={handleGoogleLogin}
       disabled={isLoading}
     >
-      {isLoading ? <LuLoaderCircle className="h-4 w-4 animate-spin" /> : <GoogleIcon className="h-4 w-4 shrink-0" />}
+      {isLoading ? (
+        <LuLoaderCircle className="h-4 w-4 animate-spin" />
+      ) : (
+        <GoogleIcon className="h-4 w-4 shrink-0" />
+      )}
       <span>{isLoading ? "Memproses..." : "Lanjutkan dengan Google"}</span>
     </Button>
   );

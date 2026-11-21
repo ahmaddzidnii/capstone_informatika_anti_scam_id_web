@@ -34,20 +34,14 @@ export function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <Sidebar className="border-r border-border">
+    <Sidebar className="border-border border-r">
       {/* Header Brand + Badge Admin */}
-      <SidebarHeader className="h-16 justify-center border-b border-border px-4">
+      <SidebarHeader className="h-16 justify-center border-border border-b px-4">
         <div className="flex items-center justify-between gap-2">
-          <Link
-            href="/dashboard"
-            aria-label="AntiScamID Admin"
-          >
+          <Link href="/dashboard" aria-label="AntiScamID Admin">
             <Logo size="sm" />
           </Link>
-          <Badge
-            variant="secondary"
-            className="text-[11px] font-semibold"
-          >
+          <Badge variant="secondary" className="font-semibold text-[11px]">
             Admin
           </Badge>
         </div>
@@ -60,7 +54,10 @@ export function AdminSidebar() {
             <SidebarMenu className="space-y-1">
               {NAV_ITEMS.map((item) => {
                 const Icon = item.icon;
-                const isActive = item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
+                const isActive =
+                  item.href === "/admin"
+                    ? pathname === "/admin"
+                    : pathname.startsWith(item.href);
 
                 return (
                   <SidebarMenuItem key={item.href}>
@@ -83,7 +80,7 @@ export function AdminSidebar() {
       </SidebarContent>
 
       {/* Footer Keluar */}
-      <SidebarFooter className="border-t border-border p-3">
+      <SidebarFooter className="border-border border-t p-3">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton

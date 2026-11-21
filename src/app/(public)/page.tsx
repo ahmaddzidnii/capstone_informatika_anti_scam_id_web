@@ -18,8 +18,11 @@ export default function Home() {
             <div className="flex items-start gap-2.5 text-left sm:items-center">
               <FaTelegramPlane className="mt-0.5 h-4 w-4 shrink-0 text-primary sm:mt-0" />
               <p className="text-foreground/90">
-                Teruskan pesan mencurigakan dari WhatsApp ke <strong className="font-semibold text-foreground">Bot Telegram AntiScamID</strong> untuk
-                cek instan.{" "}
+                Teruskan pesan mencurigakan dari WhatsApp ke{" "}
+                <strong className="font-semibold text-foreground">
+                  Bot Telegram AntiScamID
+                </strong>{" "}
+                untuk cek instan.{" "}
                 <Link
                   href="#"
                   className="inline-flex items-center gap-0.5 font-semibold text-primary hover:underline sm:hidden"
@@ -44,7 +47,7 @@ export default function Home() {
         <section className="container mx-auto max-w-4xl px-4 pt-12 pb-10 text-center sm:px-6 sm:pt-16 sm:pb-14">
           <h1
             data-animate="hero"
-            className="mx-auto max-w-3xl text-4xl font-bold tracking-tight sm:text-5xl lg:text-[56px] lg:leading-[1.1]"
+            className="mx-auto max-w-3xl font-bold text-4xl tracking-tight sm:text-5xl lg:text-[56px] lg:leading-[1.1]"
           >
             Periksa pesan dan dokumen dari indikasi penipuan
           </h1>
@@ -53,7 +56,8 @@ export default function Home() {
             data-animate="hero"
             className="mx-auto mt-5 max-w-2xl text-base text-muted-foreground sm:text-lg"
           >
-            Analisis teks pesan, tautan mencurigakan, serta dokumen PDF atau gambar berbahasa Indonesia dalam hitungan detik.
+            Analisis teks pesan, tautan mencurigakan, serta dokumen PDF atau
+            gambar berbahasa Indonesia dalam hitungan detik.
           </p>
 
           <div
@@ -62,14 +66,14 @@ export default function Home() {
           >
             <Button
               size="lg"
-              className="h-11 rounded-full px-7 text-sm font-semibold"
+              className="h-11 rounded-full px-7 font-semibold text-sm"
               nativeButton={false}
               render={<Link href="/deteksi-pesan">Periksa Pesan</Link>}
             />
             <Button
               size="lg"
               variant="outline"
-              className="h-11 rounded-full bg-card px-7 text-sm font-semibold"
+              className="h-11 rounded-full bg-card px-7 font-semibold text-sm"
               nativeButton={false}
               render={<Link href="/deteksi-dokumen">Unggah Dokumen</Link>}
             />
@@ -91,12 +95,16 @@ export default function Home() {
                 data-animate="collage-left"
                 className="overflow-hidden rounded-2xl border bg-card shadow-xl"
               >
-                <div className="aspect-[4/3] w-full bg-muted/40 flex flex-col items-center justify-center p-4 text-center">
-                  <LuImage className="h-5 w-5 text-muted-foreground mb-1.5" />
-                  <span className="text-xs font-medium text-foreground">[Foto 1: Input Teks / WA]</span>
-                  <span className="mt-0.5 text-[11px] text-muted-foreground">Potongan UI input pesan</span>
+                <div className="flex aspect-[4/3] w-full flex-col items-center justify-center bg-muted/40 p-4 text-center">
+                  <LuImage className="mb-1.5 h-5 w-5 text-muted-foreground" />
+                  <span className="font-medium text-foreground text-xs">
+                    [Foto 1: Input Teks / WA]
+                  </span>
+                  <span className="mt-0.5 text-[11px] text-muted-foreground">
+                    Potongan UI input pesan
+                  </span>
                 </div>
-                <div className="flex items-center justify-between border-t bg-card px-4 py-2.5 text-xs font-medium">
+                <div className="flex items-center justify-between border-t bg-card px-4 py-2.5 font-medium text-xs">
                   <span>Deteksi Pesan</span>
                   <span className="text-primary">Teks &amp; Tautan</span>
                 </div>
@@ -108,15 +116,18 @@ export default function Home() {
               data-animate="collage-center"
               className="relative w-full max-w-2xl overflow-hidden rounded-3xl border bg-card shadow-2xl"
             >
-              <div className="aspect-[16/10] w-full bg-muted/30 flex flex-col items-center justify-center p-8 text-center">
-                <LuImage className="h-8 w-8 text-muted-foreground mb-2" />
-                <p className="text-sm font-semibold text-foreground">[Foto Utama Aplikasi — 1440 × 900 px]</p>
-                <p className="mt-1 max-w-sm text-xs text-muted-foreground">
-                  Tangkapan layar halaman hasil pemeriksaan AntiScamID (skor keyakinan &amp; indikator).
+              <div className="flex aspect-[16/10] w-full flex-col items-center justify-center bg-muted/30 p-8 text-center">
+                <LuImage className="mb-2 h-8 w-8 text-muted-foreground" />
+                <p className="font-semibold text-foreground text-sm">
+                  [Foto Utama Aplikasi — 1440 × 900 px]
+                </p>
+                <p className="mt-1 max-w-sm text-muted-foreground text-xs">
+                  Tangkapan layar halaman hasil pemeriksaan AntiScamID (skor
+                  keyakinan &amp; indikator).
                 </p>
               </div>
 
-              <div className="absolute bottom-5 left-5 hidden rounded-full border bg-card/95 px-5 py-2.5 text-sm font-semibold shadow-md backdrop-blur-xs sm:block">
+              <div className="absolute bottom-5 left-5 hidden rounded-full border bg-card/95 px-5 py-2.5 font-semibold text-sm shadow-md backdrop-blur-xs sm:block">
                 Hasil Analisis Instan
               </div>
             </div>
@@ -130,14 +141,20 @@ export default function Home() {
                 data-animate="collage-right"
                 className="overflow-hidden rounded-2xl border bg-card shadow-xl"
               >
-                <div className="aspect-square w-full bg-muted/40 flex flex-col items-center justify-center p-4 text-center">
-                  <LuImage className="h-5 w-5 text-muted-foreground mb-1.5" />
-                  <span className="text-xs font-medium text-foreground">[Foto 2: Dokumen OCR]</span>
-                  <span className="mt-0.5 text-[11px] text-muted-foreground">Potongan UI hasil scan PDF</span>
+                <div className="flex aspect-square w-full flex-col items-center justify-center bg-muted/40 p-4 text-center">
+                  <LuImage className="mb-1.5 h-5 w-5 text-muted-foreground" />
+                  <span className="font-medium text-foreground text-xs">
+                    [Foto 2: Dokumen OCR]
+                  </span>
+                  <span className="mt-0.5 text-[11px] text-muted-foreground">
+                    Potongan UI hasil scan PDF
+                  </span>
                 </div>
                 <div className="border-t bg-card px-4 py-2.5">
-                  <p className="text-xs font-semibold">Screening Dokumen</p>
-                  <p className="text-[11px] text-muted-foreground">PDF, JPG, PNG</p>
+                  <p className="font-semibold text-xs">Screening Dokumen</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    PDF, JPG, PNG
+                  </p>
                 </div>
               </div>
             </div>
@@ -151,9 +168,12 @@ export default function Home() {
             className="container mx-auto max-w-5xl px-4 py-20 sm:px-6 sm:py-24"
           >
             <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Lihat cara kerja pengujian sistem</h2>
-              <p className="mt-3 text-sm text-muted-foreground sm:text-base">
-                Simulasi pemeriksaan pesan penipuan, pembacaan teks dokumen, dan pelaporan kasus.
+              <h2 className="font-bold text-3xl tracking-tight sm:text-4xl">
+                Lihat cara kerja pengujian sistem
+              </h2>
+              <p className="mt-3 text-muted-foreground text-sm sm:text-base">
+                Simulasi pemeriksaan pesan penipuan, pembacaan teks dokumen, dan
+                pelaporan kasus.
               </p>
             </div>
 
@@ -172,22 +192,25 @@ export default function Home() {
         </section>
 
         {/* 5. FEATURE SHOWCASE */}
-        <section className="container mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28 space-y-24">
+        <section className="container mx-auto max-w-6xl space-y-24 px-4 py-20 sm:px-6 sm:py-28">
           {/* Blok 1 */}
           <div
             data-animate="reveal"
             className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-16"
           >
             <div className="space-y-4 lg:col-span-5">
-              <h3 className="text-2xl font-bold tracking-tight sm:text-3xl">Deteksi pola manipulasi pada pesan singkat</h3>
-              <p className="text-base leading-relaxed text-muted-foreground">
-                Tempel pesan dari WhatsApp atau SMS. Sistem menandai kalimat berindikasi penipuan seperti klaim hadiah palsu, desakan transfer, hingga
-                tautan phishing.
+              <h3 className="font-bold text-2xl tracking-tight sm:text-3xl">
+                Deteksi pola manipulasi pada pesan singkat
+              </h3>
+              <p className="text-base text-muted-foreground leading-relaxed">
+                Tempel pesan dari WhatsApp atau SMS. Sistem menandai kalimat
+                berindikasi penipuan seperti klaim hadiah palsu, desakan
+                transfer, hingga tautan phishing.
               </p>
               <div className="pt-2">
                 <Link
                   href="/deteksi-pesan"
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+                  className="inline-flex items-center gap-1.5 font-semibold text-primary text-sm hover:underline"
                 >
                   <span>Coba deteksi pesan</span>
                   <LuArrowRight className="h-4 w-4" />
@@ -196,9 +219,11 @@ export default function Home() {
             </div>
 
             <div className="lg:col-span-7">
-              <div className="aspect-[16/10] w-full overflow-hidden rounded-3xl border bg-card shadow-sm flex flex-col items-center justify-center p-6 text-center">
-                <LuImage className="h-7 w-7 text-muted-foreground mb-2" />
-                <p className="text-sm font-medium">[Foto Fitur 1: Halaman Hasil Deteksi Pesan]</p>
+              <div className="flex aspect-[16/10] w-full flex-col items-center justify-center overflow-hidden rounded-3xl border bg-card p-6 text-center shadow-sm">
+                <LuImage className="mb-2 h-7 w-7 text-muted-foreground" />
+                <p className="font-medium text-sm">
+                  [Foto Fitur 1: Halaman Hasil Deteksi Pesan]
+                </p>
               </div>
             </div>
           </div>
@@ -209,22 +234,27 @@ export default function Home() {
             className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-16"
           >
             <div className="order-2 lg:order-1 lg:col-span-7">
-              <div className="aspect-[16/10] w-full overflow-hidden rounded-3xl border bg-card shadow-sm flex flex-col items-center justify-center p-6 text-center">
-                <LuImage className="h-7 w-7 text-muted-foreground mb-2" />
-                <p className="text-sm font-medium">[Foto Fitur 2: Halaman Hasil Ekstraksi Dokumen]</p>
+              <div className="flex aspect-[16/10] w-full flex-col items-center justify-center overflow-hidden rounded-3xl border bg-card p-6 text-center shadow-sm">
+                <LuImage className="mb-2 h-7 w-7 text-muted-foreground" />
+                <p className="font-medium text-sm">
+                  [Foto Fitur 2: Halaman Hasil Ekstraksi Dokumen]
+                </p>
               </div>
             </div>
 
             <div className="order-1 space-y-4 lg:order-2 lg:col-span-5">
-              <h3 className="text-2xl font-bold tracking-tight sm:text-3xl">Periksa keaslian isi surat dan tagihan gambar</h3>
-              <p className="text-base leading-relaxed text-muted-foreground">
-                Unggah file PDF atau tangkapan layar. Teks diekstrak secara otomatis untuk mendeteksi pemalsuan kop surat instansi maupun invoice
-                fiktif.
+              <h3 className="font-bold text-2xl tracking-tight sm:text-3xl">
+                Periksa keaslian isi surat dan tagihan gambar
+              </h3>
+              <p className="text-base text-muted-foreground leading-relaxed">
+                Unggah file PDF atau tangkapan layar. Teks diekstrak secara
+                otomatis untuk mendeteksi pemalsuan kop surat instansi maupun
+                invoice fiktif.
               </p>
               <div className="pt-2">
                 <Link
                   href="/deteksi-dokumen"
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+                  className="inline-flex items-center gap-1.5 font-semibold text-primary text-sm hover:underline"
                 >
                   <span>Coba deteksi dokumen</span>
                   <LuArrowRight className="h-4 w-4" />

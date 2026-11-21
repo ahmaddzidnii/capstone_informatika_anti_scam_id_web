@@ -1,7 +1,7 @@
-import { auth } from "@/lib/auth";
-import { callbackSDK } from "@/lib/callback-sdk";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
+import { callbackSDK } from "@/lib/callback-sdk";
 
 interface LayoutPageProps {
   children: React.ReactNode;

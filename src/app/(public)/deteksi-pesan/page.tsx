@@ -1,16 +1,27 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { LuCheck, LuLoaderCircle, LuShieldAlert } from "react-icons/lu";
 import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Field, FieldError, FieldGroup } from "@/components/ui/field";
-import { InputGroup, InputGroupAddon, InputGroupText, InputGroupTextarea } from "@/components/ui/input-group";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupText,
+  InputGroupTextarea,
+} from "@/components/ui/input-group";
 import { toast } from "@/components/ui/toast";
 import { useTRPC } from "@/trpc/client";
 
@@ -18,12 +29,19 @@ const MIN_CHARS = 5;
 const MAX_CHARS = 2000;
 
 const formSchema = z.object({
-  text: z.string().trim().min(MIN_CHARS, "Pesan terlalu pendek untuk dianalisis.").max(MAX_CHARS, `Pesan maksimal ${MAX_CHARS} karakter.`),
+  text: z
+    .string()
+    .trim()
+    .min(MIN_CHARS, "Pesan terlalu pendek untuk dianalisis.")
+    .max(MAX_CHARS, `Pesan maksimal ${MAX_CHARS} karakter.`),
 });
 
 const ANALYSIS_STEPS = [
   { threshold: 0, label: "Memindai struktur kalimat & tautan..." },
-  { threshold: 35, label: "Mendeteksi pola rekayasa sosial (social engineering)..." },
+  {
+    threshold: 35,
+    label: "Mendeteksi pola rekayasa sosial (social engineering)...",
+  },
   { threshold: 68, label: "Mencocokkan modus penipuan umum..." },
   { threshold: 88, label: "Menyusun skor risiko & kesimpulan..." },
 ];
@@ -42,7 +60,8 @@ export default function DeteksiPesanPage() {
     onError: (error) => {
       toast.add({
         title: "Gagal menganalisis pesan",
-        description: error.message || "Terjadi kesalahan pada server. Silakan coba lagi.",
+        description:
+          error.message || "Terjadi kesalahan pada server. Silakan coba lagi.",
         type: "error",
       });
     },
@@ -71,7 +90,10 @@ export default function DeteksiPesanPage() {
       setProgress((prev) => {
         if (prev >= 95) return 95;
         const remaining = 95 - prev;
-        const step = Math.max(1, Math.round(remaining * (Math.random() * 0.18 + 0.06)));
+        const step = Math.max(
+          1,
+          Math.round(remaining * (Math.random() * 0.18 + 0.06)),
+        );
         return Math.min(95, prev + step);
       });
     }, 450);
@@ -79,13 +101,19 @@ export default function DeteksiPesanPage() {
     return () => clearInterval(interval);
   }, [mutation.isPending]);
 
-  const currentStep = [...ANALYSIS_STEPS].reverse().find((s) => progress >= s.threshold) ?? ANALYSIS_STEPS[0];
+  const currentStep =
+    [...ANALYSIS_STEPS].reverse().find((s) => progress >= s.threshold) ??
+    ANALYSIS_STEPS[0];
 
   return (
-    <div className="container mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16 space-y-6">
-      <div className="text-center space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Deteksi Pesan Penipuan</h1>
-        <p className="text-sm text-muted-foreground sm:text-base">Tulis atau tempel pesan mencurigakan di sini...</p>
+    <div className="container mx-auto max-w-3xl space-y-6 px-4 py-12 sm:px-6 sm:py-16">
+      <div className="space-y-2 text-center">
+        <h1 className="font-bold text-2xl tracking-tight sm:text-3xl">
+          Deteksi Pesan Penipuan
+        </h1>
+        <p className="text-muted-foreground text-sm sm:text-base">
+          Tulis atau tempel pesan mencurigakan di sini...
+        </p>
       </div>
 
       <form
@@ -100,7 +128,8 @@ export default function DeteksiPesanPage() {
           <form.Field
             name="text"
             children={(field) => {
-              const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+              const isInvalid =
+                field.state.meta.isTouched && !field.state.meta.isValid;
 
               return (
                 <Field data-invalid={isInvalid}>
@@ -110,7 +139,9 @@ export default function DeteksiPesanPage() {
                       name={field.name}
                       value={field.state.value}
                       onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value.slice(0, MAX_CHARS))}
+                      onChange={(e) =>
+                        field.handleChange(e.target.value.slice(0, MAX_CHARS))
+                      }
                       placeholder="Tulis atau tempel pesan mencurigakan di sini (contoh: SMS hadiah, pesan WhatsApp penipuan, tautan mencurigakan)..."
                       rows={8}
                       className="min-h-[220px] resize-none text-sm sm:text-base"
@@ -135,7 +166,7 @@ export default function DeteksiPesanPage() {
           type="submit"
           form="analyze-message-form"
           disabled={mutation.isPending}
-          className="w-full h-11 text-sm font-medium"
+          className="h-11 w-full font-medium text-sm"
         >
           Periksa Pesan Sekarang
         </Button>
@@ -143,18 +174,19 @@ export default function DeteksiPesanPage() {
 
       {/* Loading Modal dengan Progress Bar */}
       <Dialog open={mutation.isPending}>
-        <DialogContent
-          showCloseButton={false}
-          className="sm:max-w-md"
-        >
+        <DialogContent showCloseButton={false} className="sm:max-w-md">
           <DialogHeader className="space-y-1 text-left">
             <div className="flex items-center gap-2.5">
               <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary">
                 <LuShieldAlert className="h-4 w-4" />
               </div>
               <div>
-                <DialogTitle className="text-base font-semibold">Memeriksa Keamanan Pesan</DialogTitle>
-                <DialogDescription className="text-xs">Proses ini biasanya memakan waktu beberapa detik</DialogDescription>
+                <DialogTitle className="font-semibold text-base">
+                  Memeriksa Keamanan Pesan
+                </DialogTitle>
+                <DialogDescription className="text-xs">
+                  Proses ini biasanya memakan waktu beberapa detik
+                </DialogDescription>
               </div>
             </div>
           </DialogHeader>
@@ -163,8 +195,12 @@ export default function DeteksiPesanPage() {
             {/* Bar & Persentase */}
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-foreground">{currentStep.label}</span>
-                <span className="font-mono text-muted-foreground tabular-nums">{progress}%</span>
+                <span className="font-medium text-foreground">
+                  {currentStep.label}
+                </span>
+                <span className="font-mono text-muted-foreground tabular-nums">
+                  {progress}%
+                </span>
               </div>
               <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
                 <div
@@ -177,7 +213,8 @@ export default function DeteksiPesanPage() {
             {/* Mini Checklist Tahapan */}
             <div className="space-y-1.5 rounded-lg border bg-muted/40 p-3 text-xs">
               {ANALYSIS_STEPS.map((step, idx) => {
-                const isDone = progress > (ANALYSIS_STEPS[idx + 1]?.threshold ?? 100);
+                const isDone =
+                  progress > (ANALYSIS_STEPS[idx + 1]?.threshold ?? 100);
                 const isActive = currentStep.threshold === step.threshold;
 
                 return (
@@ -192,7 +229,15 @@ export default function DeteksiPesanPage() {
                     ) : (
                       <span className="h-3.5 w-3.5 shrink-0 rounded-full border border-muted-foreground/40" />
                     )}
-                    <span className={isActive ? "font-medium text-foreground" : "text-muted-foreground"}>{step.label.replace("...", "")}</span>
+                    <span
+                      className={
+                        isActive
+                          ? "font-medium text-foreground"
+                          : "text-muted-foreground"
+                      }
+                    >
+                      {step.label.replace("...", "")}
+                    </span>
                   </div>
                 );
               })}

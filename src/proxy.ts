@@ -1,16 +1,16 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 export function proxy(request: NextRequest) {
-    const requestHeaders = new Headers(request.headers);
-    requestHeaders.set("x-url", request.url);
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-url", request.url);
 
-    return NextResponse.next({
-        request: {
-            headers: requestHeaders,
-        },
-    });
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 }
 
 export const config = {
-    matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };

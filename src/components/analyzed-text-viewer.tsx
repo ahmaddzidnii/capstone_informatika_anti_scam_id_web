@@ -1,7 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { LuCheck, LuCopy, LuFileWarning, LuLink2, LuMessageSquare, LuSmartphone } from "react-icons/lu";
+import {
+  LuCheck,
+  LuCopy,
+  LuFileWarning,
+  LuLink2,
+  LuMessageSquare,
+  LuSmartphone,
+} from "react-icons/lu";
 
 type ArtifactType = "file" | "link" | "nominal";
 
@@ -15,11 +22,18 @@ const ARTIFACT_REGEX =
 
 function classifyArtifact(value: string): ArtifactType {
   if (/\.(apk|exe|bat|scr|msi|zip)$/i.test(value)) return "file";
-  if (/^(https?:\/\/|bit\.ly|tinyurl\.com|s\.id|wa\.me)/i.test(value)) return "link";
+  if (/^(https?:\/\/|bit\.ly|tinyurl\.com|s\.id|wa\.me)/i.test(value))
+    return "link";
   return "nominal";
 }
 
-export function AnalyzedTextViewer({ text, isDocument = false }: { text: string; isDocument?: boolean }) {
+export function AnalyzedTextViewer({
+  text,
+  isDocument = false,
+}: {
+  text: string;
+  isDocument?: boolean;
+}) {
   const [copied, setCopied] = useState(false);
 
   const { segments, artifacts } = useMemo(() => {
@@ -68,11 +82,15 @@ export function AnalyzedTextViewer({ text, isDocument = false }: { text: string;
   };
 
   return (
-    <div className="rounded-2xl border bg-muted/25 p-4 sm:p-5 space-y-4">
+    <div className="space-y-4 rounded-2xl border bg-muted/25 p-4 sm:p-5">
       {/* Baris Info Sumber */}
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
+      <div className="flex items-center justify-between text-muted-foreground text-xs">
         <div className="inline-flex items-center gap-1.5">
-          {isDocument ? <LuFileWarning className="h-3.5 w-3.5" /> : <LuSmartphone className="h-3.5 w-3.5" />}
+          {isDocument ? (
+            <LuFileWarning className="h-3.5 w-3.5" />
+          ) : (
+            <LuSmartphone className="h-3.5 w-3.5" />
+          )}
           <span>{isDocument ? "Ekstraksi Teks Dokumen" : "Pesan Masuk"}</span>
           <span>·</span>
           <span className="tabular-nums">{text.length} karakter</span>
@@ -81,7 +99,7 @@ export function AnalyzedTextViewer({ text, isDocument = false }: { text: string;
         <button
           type="button"
           onClick={handleCopy}
-          className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-background hover:text-foreground transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 font-medium text-muted-foreground text-xs transition-colors hover:bg-background hover:text-foreground"
         >
           {copied ? (
             <>
@@ -101,8 +119,8 @@ export function AnalyzedTextViewer({ text, isDocument = false }: { text: string;
       <div
         className={
           isDocument
-            ? "rounded-xl border bg-background p-4 text-sm leading-7 text-foreground whitespace-pre-wrap"
-            : "relative rounded-2xl rounded-tl-sm border bg-background px-4 py-3.5 text-sm leading-7 text-foreground shadow-2xs whitespace-pre-wrap"
+            ? "whitespace-pre-wrap rounded-xl border bg-background p-4 text-foreground text-sm leading-7"
+            : "relative whitespace-pre-wrap rounded-2xl rounded-tl-sm border bg-background px-4 py-3.5 text-foreground text-sm leading-7 shadow-2xs"
         }
       >
         {segments.map((seg, idx) => {
@@ -112,7 +130,7 @@ export function AnalyzedTextViewer({ text, isDocument = false }: { text: string;
             return (
               <mark
                 key={idx}
-                className="mx-0.5 inline-flex items-center gap-1 rounded-md border border-destructive/30 bg-destructive/10 px-1.5 py-0.5 font-mono text-[13px] font-semibold text-destructive"
+                className="mx-0.5 inline-flex items-center gap-1 rounded-md border border-destructive/30 bg-destructive/10 px-1.5 py-0.5 font-mono font-semibold text-[13px] text-destructive"
               >
                 {seg.text}
               </mark>
@@ -123,7 +141,7 @@ export function AnalyzedTextViewer({ text, isDocument = false }: { text: string;
             return (
               <mark
                 key={idx}
-                className="mx-0.5 rounded bg-amber-500/15 px-1.5 py-0.5 font-mono text-[13px] font-medium text-amber-800 underline decoration-amber-500/50 underline-offset-4 dark:text-amber-300"
+                className="mx-0.5 rounded bg-amber-500/15 px-1.5 py-0.5 font-medium font-mono text-[13px] text-amber-800 underline decoration-amber-500/50 underline-offset-4 dark:text-amber-300"
               >
                 {seg.text}
               </mark>
@@ -144,11 +162,13 @@ export function AnalyzedTextViewer({ text, isDocument = false }: { text: string;
       {/* Ringkasan Entitas yang Ditemukan di Dalam Teks */}
       {artifacts.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 pt-0.5">
-          <span className="text-xs text-muted-foreground">Entitas terdeteksi:</span>
+          <span className="text-muted-foreground text-xs">
+            Entitas terdeteksi:
+          </span>
           {artifacts.map((item) => (
             <span
               key={item.value}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-mono ${
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono text-xs ${
                 item.type === "file"
                   ? "border-destructive/30 bg-destructive/10 text-destructive"
                   : item.type === "link"

@@ -3,7 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { LuHistory, LuLayoutDashboard, LuLoaderCircle, LuLogIn, LuLogOut, LuShield } from "react-icons/lu";
+import {
+  LuHistory,
+  LuLayoutDashboard,
+  LuLoaderCircle,
+  LuLogIn,
+  LuLogOut,
+  LuShield,
+} from "react-icons/lu";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -18,8 +25,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "@/components/ui/toast";
-import { useAuth } from "./auth-context";
 import { authClient } from "@/lib/auth-client";
+import { useAuth } from "./auth-context";
 
 function getInitials(name?: string | null) {
   if (!name) return "U";
@@ -89,28 +96,30 @@ export function UserButton() {
             className="relative h-9 gap-2.5 rounded-full px-1.5 pr-2.5 hover:bg-muted/70"
           >
             <Avatar className="h-7 w-7 border border-border">
-              <AvatarImage
-                src={user.image ?? undefined}
-                alt={user.name}
-              />
-              <AvatarFallback className="text-xs font-semibold">{getInitials(user.name)}</AvatarFallback>
+              <AvatarImage src={user.image ?? undefined} alt={user.name} />
+              <AvatarFallback className="font-semibold text-xs">
+                {getInitials(user.name)}
+              </AvatarFallback>
             </Avatar>
-            <span className="hidden max-w-28 truncate text-sm font-medium sm:inline-block">{user.name}</span>
+            <span className="hidden max-w-28 truncate font-medium text-sm sm:inline-block">
+              {user.name}
+            </span>
           </Button>
         }
       />
 
-      <DropdownMenuContent
-        align="end"
-        className="w-60"
-      >
+      <DropdownMenuContent align="end" className="w-60">
         <DropdownMenuGroup>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
               <div className="flex items-center justify-between gap-2">
-                <p className="truncate text-sm font-semibold leading-none text-foreground">{user.name}</p>
+                <p className="truncate font-semibold text-foreground text-sm leading-none">
+                  {user.name}
+                </p>
               </div>
-              <p className="truncate text-xs leading-none text-muted-foreground">{user.email}</p>
+              <p className="truncate text-muted-foreground text-xs leading-none">
+                {user.email}
+              </p>
             </div>
           </DropdownMenuLabel>
         </DropdownMenuGroup>
@@ -121,10 +130,7 @@ export function UserButton() {
           {isAdmin && (
             <DropdownMenuItem
               render={
-                <Link
-                  href="/dashboard"
-                  className="cursor-pointer"
-                >
+                <Link href="/dashboard" className="cursor-pointer">
                   <LuLayoutDashboard className="mr-2 h-4 w-4" />
                   <span>Dashboard Admin</span>
                 </Link>
@@ -134,10 +140,7 @@ export function UserButton() {
 
           <DropdownMenuItem
             render={
-              <Link
-                href="/riwayat"
-                className="cursor-pointer"
-              >
+              <Link href="/riwayat" className="cursor-pointer">
                 <LuHistory className="mr-2 h-4 w-4" />
                 <span>Riwayat Pemeriksaan</span>
               </Link>
@@ -152,7 +155,11 @@ export function UserButton() {
           onClick={handleSignOut}
           className="cursor-pointer text-red-600 focus:bg-red-500/10 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
         >
-          {isSigningOut ? <LuLoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <LuLogOut className="mr-2 h-4 w-4" />}
+          {isSigningOut ? (
+            <LuLoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <LuLogOut className="mr-2 h-4 w-4" />
+          )}
           <span>{isSigningOut ? "Keluar..." : "Keluar"}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>

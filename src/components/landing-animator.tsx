@@ -66,7 +66,9 @@ export function LandingAnimator({ children }: { children: React.ReactNode }) {
         });
 
         // 3. Scroll Reveal untuk section bawah (Video, Fitur, FAQ)
-        const revealEls = gsap.utils.toArray<HTMLElement>("[data-animate='reveal']");
+        const revealEls = gsap.utils.toArray<HTMLElement>(
+          "[data-animate='reveal']",
+        );
 
         revealEls.forEach((el) => {
           gsap.from(el, {

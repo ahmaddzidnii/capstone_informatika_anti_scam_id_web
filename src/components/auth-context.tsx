@@ -24,7 +24,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const user = data?.user ?? null;
     const session = data?.session ?? null;
 
-    const roles = user?.role?.split(",").map((r) => r.trim().toLowerCase()) ?? [];
+    const roles =
+      user?.role?.split(",").map((r) => r.trim().toLowerCase()) ?? [];
     const isAdmin = roles.includes("admin");
 
     return {

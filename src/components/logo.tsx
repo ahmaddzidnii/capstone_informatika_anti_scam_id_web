@@ -34,7 +34,13 @@ export function Logo({ className, size = "md" }: LogoProps) {
   }[size];
 
   return (
-    <span className={cn("inline-flex items-center gap-2 select-none", logoFont.className, className)}>
+    <span
+      className={cn(
+        "inline-flex select-none items-center gap-2",
+        logoFont.className,
+        className,
+      )}
+    >
       {/* Emblem SVG: Perisai + Radar Scan */}
       <svg
         viewBox="0 0 28 28"
@@ -60,26 +66,27 @@ export function Logo({ className, size = "md" }: LogoProps) {
 
       {/* Wordmark: ANTISCAM + (FLAG ID) */}
       <span className="inline-flex items-center gap-1.5">
-        <span className={cn("font-bold uppercase tracking-[-0.04em] text-foreground leading-none", sizes.text)}>ANTISCAM</span>
+        <span
+          className={cn(
+            "font-bold text-foreground uppercase leading-none tracking-[-0.04em]",
+            sizes.text,
+          )}
+        >
+          ANTISCAM
+        </span>
 
         <svg
           viewBox="0 0 16 12"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className={cn("shrink-0 rounded-[2px] border border-black/10", sizes.flag)}
+          className={cn(
+            "shrink-0 rounded-[2px] border border-black/10",
+            sizes.flag,
+          )}
           aria-hidden="true"
         >
-          <rect
-            width="16"
-            height="6"
-            fill="#E11D48"
-          />
-          <rect
-            y="6"
-            width="16"
-            height="6"
-            fill="#FFFFFF"
-          />
+          <rect width="16" height="6" fill="#E11D48" />
+          <rect y="6" width="16" height="6" fill="#FFFFFF" />
         </svg>
       </span>
     </span>

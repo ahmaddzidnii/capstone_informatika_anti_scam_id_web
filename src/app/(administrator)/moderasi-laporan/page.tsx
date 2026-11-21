@@ -1,19 +1,49 @@
 "use client";
 
 import { useState } from "react";
-import { LuChevronLeft, LuChevronRight, LuImage, LuSearch, LuShieldAlert } from "react-icons/lu";
+import {
+  LuChevronLeft,
+  LuChevronRight,
+  LuImage,
+  LuSearch,
+  LuShieldAlert,
+} from "react-icons/lu";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
 
-type ReportStatus = "Menunggu Verifikasi" | "Sedang Ditinjau" | "Terverifikasi sebagai penipuan" | "Tidak cukup bukti" | "Ditolak";
+type ReportStatus =
+  | "Menunggu Verifikasi"
+  | "Sedang Ditinjau"
+  | "Terverifikasi sebagai penipuan"
+  | "Tidak cukup bukti"
+  | "Ditolak";
 
 interface ReportItem {
   id: string;
@@ -39,7 +69,8 @@ const INITIAL_REPORTS: ReportItem[] = [
     date: "18 Okt 2026",
     platform: "WhatsApp",
     category: "Undian / Hadiah",
-    chronology: "Diterima lewat WhatsApp dari nomor tidak dikenal, diminta transfer biaya admin Rp 250.000 terlebih dahulu agar dana dicairkan.",
+    chronology:
+      "Diterima lewat WhatsApp dari nomor tidak dikenal, diminta transfer biaya admin Rp 250.000 terlebih dahulu agar dana dicairkan.",
     aiPrediction: "Indikasi Penipuan",
     aiConfidence: 92,
     status: "Menunggu Verifikasi",
@@ -53,7 +84,8 @@ const INITIAL_REPORTS: ReportItem[] = [
     date: "17 Okt 2026",
     platform: "WhatsApp",
     category: "Penyamaran Kerabat",
-    chronology: "Mengaku sebagai sepupu yang ganti nomor baru dan meminjam uang mendesak.",
+    chronology:
+      "Mengaku sebagai sepupu yang ganti nomor baru dan meminjam uang mendesak.",
     aiPrediction: "Indikasi Penipuan",
     aiConfidence: 88,
     status: "Sedang Ditinjau",
@@ -67,7 +99,8 @@ const INITIAL_REPORTS: ReportItem[] = [
     date: "17 Okt 2026",
     platform: "SMS",
     category: "Phishing / Tautan Palsu",
-    chronology: "Masuk melalui SMS banking dengan nama pengirim menyerupai bank resmi.",
+    chronology:
+      "Masuk melalui SMS banking dengan nama pengirim menyerupai bank resmi.",
     aiPrediction: "Indikasi Penipuan",
     aiConfidence: 96,
     status: "Ditolak",
@@ -96,7 +129,9 @@ export default function ModerasiLaporanPage() {
 
   // State Modal Detail
   const [selectedReport, setSelectedReport] = useState<ReportItem | null>(null);
-  const [draftStatus, setDraftStatus] = useState<ReportStatus>("Menunggu Verifikasi");
+  const [draftStatus, setDraftStatus] = useState<ReportStatus>(
+    "Menunggu Verifikasi",
+  );
 
   const filteredReports = reports.filter((item) => {
     const matchesSearch =
@@ -104,7 +139,8 @@ export default function ModerasiLaporanPage() {
       item.snippet.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.id.includes(searchQuery);
 
-    const matchesStatus = statusFilter === "semua" || item.status === statusFilter;
+    const matchesStatus =
+      statusFilter === "semua" || item.status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
@@ -117,7 +153,11 @@ export default function ModerasiLaporanPage() {
   const handleSaveStatus = () => {
     if (!selectedReport) return;
 
-    setReports((prev) => prev.map((item) => (item.id === selectedReport.id ? { ...item, status: draftStatus } : item)));
+    setReports((prev) =>
+      prev.map((item) =>
+        item.id === selectedReport.id ? { ...item, status: draftStatus } : item,
+      ),
+    );
 
     toast.add({
       type: "success",
@@ -131,8 +171,12 @@ export default function ModerasiLaporanPage() {
     <div className="mx-auto max-w-6xl space-y-6">
       {/* Header Judul */}
       <div className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Moderasi Laporan Masuk</h1>
-        <p className="text-sm text-muted-foreground">Daftar laporan pesan/dokumen yang dikirim pengguna untuk ditinjau.</p>
+        <h1 className="font-bold text-2xl tracking-tight sm:text-3xl">
+          Moderasi Laporan Masuk
+        </h1>
+        <p className="text-muted-foreground text-sm">
+          Daftar laporan pesan/dokumen yang dikirim pengguna untuk ditinjau.
+        </p>
       </div>
 
       {/* Filter Bar */}
@@ -158,9 +202,13 @@ export default function ModerasiLaporanPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="semua">Semua Status</SelectItem>
-            <SelectItem value="Menunggu Verifikasi">Menunggu Verifikasi</SelectItem>
+            <SelectItem value="Menunggu Verifikasi">
+              Menunggu Verifikasi
+            </SelectItem>
             <SelectItem value="Sedang Ditinjau">Sedang Ditinjau</SelectItem>
-            <SelectItem value="Terverifikasi sebagai penipuan">Terverifikasi sebagai penipuan</SelectItem>
+            <SelectItem value="Terverifikasi sebagai penipuan">
+              Terverifikasi sebagai penipuan
+            </SelectItem>
             <SelectItem value="Tidak cukup bukti">Tidak cukup bukti</SelectItem>
             <SelectItem value="Ditolak">Ditolak</SelectItem>
           </SelectContent>
@@ -170,7 +218,9 @@ export default function ModerasiLaporanPage() {
       {/* Tabel Laporan Masuk */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold">Tabel Laporan Masuk</CardTitle>
+          <CardTitle className="font-semibold text-base">
+            Tabel Laporan Masuk
+          </CardTitle>
         </CardHeader>
 
         <CardContent className="space-y-4">
@@ -181,7 +231,9 @@ export default function ModerasiLaporanPage() {
                   <TableHead className="w-14">No</TableHead>
                   <TableHead>
                     <div>Pengirim</div>
-                    <div className="text-[11px] font-normal text-muted-foreground">Guest / ID Pengguna</div>
+                    <div className="font-normal text-[11px] text-muted-foreground">
+                      Guest / ID Pengguna
+                    </div>
                   </TableHead>
                   <TableHead>Cuplikan Pesan</TableHead>
                   <TableHead className="whitespace-nowrap">Tanggal</TableHead>
@@ -195,7 +247,7 @@ export default function ModerasiLaporanPage() {
                   <TableRow>
                     <TableCell
                       colSpan={6}
-                      className="h-24 text-center text-sm text-muted-foreground"
+                      className="h-24 text-center text-muted-foreground text-sm"
                     >
                       Tidak ada laporan yang sesuai dengan filter.
                     </TableCell>
@@ -204,9 +256,15 @@ export default function ModerasiLaporanPage() {
                   filteredReports.map((item, index) => (
                     <TableRow key={item.id}>
                       <TableCell className="font-medium">{index + 1}</TableCell>
-                      <TableCell className="font-medium whitespace-nowrap">{item.sender}</TableCell>
-                      <TableCell className="max-w-[240px] truncate text-muted-foreground">{item.snippet}</TableCell>
-                      <TableCell className="whitespace-nowrap text-muted-foreground">{item.date}</TableCell>
+                      <TableCell className="whitespace-nowrap font-medium">
+                        {item.sender}
+                      </TableCell>
+                      <TableCell className="max-w-[240px] truncate text-muted-foreground">
+                        {item.snippet}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-muted-foreground">
+                        {item.date}
+                      </TableCell>
                       <TableCell>
                         <Badge
                           variant={getStatusBadgeVariant(item.status)}
@@ -279,8 +337,12 @@ export default function ModerasiLaporanPage() {
       >
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Detail Laporan #{selectedReport?.id}</DialogTitle>
-            <DialogDescription className="sr-only">Detail informasi laporan pengguna dan perubahan status moderasi</DialogDescription>
+            <DialogTitle className="font-bold text-xl">
+              Detail Laporan #{selectedReport?.id}
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              Detail informasi laporan pengguna dan perubahan status moderasi
+            </DialogDescription>
           </DialogHeader>
 
           {selectedReport && (
@@ -288,7 +350,9 @@ export default function ModerasiLaporanPage() {
               {/* Kolom Kiri: Informasi Laporan */}
               <div className="space-y-4 md:col-span-7">
                 <div className="space-y-1.5">
-                  <h3 className="text-sm font-semibold text-foreground">Informasi Laporan</h3>
+                  <h3 className="font-semibold text-foreground text-sm">
+                    Informasi Laporan
+                  </h3>
                   <dl className="grid grid-cols-[120px_1fr] gap-y-1 text-xs sm:text-sm">
                     <dt className="text-muted-foreground">Pengirim:</dt>
                     <dd className="font-medium">{selectedReport.sender}</dd>
@@ -305,7 +369,7 @@ export default function ModerasiLaporanPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Isi Pesan</Label>
+                  <Label className="font-semibold text-xs">Isi Pesan</Label>
                   <Textarea
                     readOnly
                     value={selectedReport.fullMessage}
@@ -314,7 +378,7 @@ export default function ModerasiLaporanPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Kronologi</Label>
+                  <Label className="font-semibold text-xs">Kronologi</Label>
                   <Textarea
                     readOnly
                     value={selectedReport.chronology}
@@ -323,10 +387,14 @@ export default function ModerasiLaporanPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Bukti Pendukung</Label>
+                  <Label className="font-semibold text-xs">
+                    Bukti Pendukung
+                  </Label>
                   <div className="flex h-32 w-full flex-col items-center justify-center rounded-lg border border-dashed bg-muted/30 p-4 text-center">
                     <LuImage className="mb-1.5 h-5 w-5 text-muted-foreground" />
-                    <span className="text-xs font-medium text-muted-foreground">[Gambar Bukti Tangkapan Layar]</span>
+                    <span className="font-medium text-muted-foreground text-xs">
+                      [Gambar Bukti Tangkapan Layar]
+                    </span>
                   </div>
                 </div>
               </div>
@@ -334,26 +402,29 @@ export default function ModerasiLaporanPage() {
               {/* Kolom Kanan: Status & Aksi Admin */}
               <div className="flex flex-col justify-between space-y-6 rounded-xl border bg-muted/20 p-4 md:col-span-5">
                 <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-foreground">Status &amp; Aksi Admin</h3>
+                  <h3 className="font-semibold text-foreground text-sm">
+                    Status &amp; Aksi Admin
+                  </h3>
 
                   {/* Prediksi Awal AI */}
                   <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs">
                     <LuShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
                     <div>
-                      <span className="font-medium text-foreground">Prediksi Awal AI: </span>
+                      <span className="font-medium text-foreground">
+                        Prediksi Awal AI:{" "}
+                      </span>
                       <span className="font-bold text-destructive">
-                        {selectedReport.aiPrediction} ({selectedReport.aiConfidence}%)
+                        {selectedReport.aiPrediction} (
+                        {selectedReport.aiConfidence}%)
                       </span>
                     </div>
                   </div>
 
                   {/* Dropdown Ubah Status */}
                   <div className="space-y-2">
-                    <Label
-                      htmlFor="admin-status-select"
-                      className="text-xs"
-                    >
-                      Ubah Status Laporan <span className="text-destructive">*</span>
+                    <Label htmlFor="admin-status-select" className="text-xs">
+                      Ubah Status Laporan{" "}
+                      <span className="text-destructive">*</span>
                     </Label>
                     <Select
                       value={draftStatus}
@@ -368,10 +439,18 @@ export default function ModerasiLaporanPage() {
                         <SelectValue placeholder="Pilih status baru" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Menunggu Verifikasi">Menunggu Verifikasi</SelectItem>
-                        <SelectItem value="Terverifikasi sebagai penipuan">Terverifikasi sebagai penipuan</SelectItem>
-                        <SelectItem value="Sedang Ditinjau">Sedang Ditinjau</SelectItem>
-                        <SelectItem value="Tidak cukup bukti">Tidak cukup bukti</SelectItem>
+                        <SelectItem value="Menunggu Verifikasi">
+                          Menunggu Verifikasi
+                        </SelectItem>
+                        <SelectItem value="Terverifikasi sebagai penipuan">
+                          Terverifikasi sebagai penipuan
+                        </SelectItem>
+                        <SelectItem value="Sedang Ditinjau">
+                          Sedang Ditinjau
+                        </SelectItem>
+                        <SelectItem value="Tidak cukup bukti">
+                          Tidak cukup bukti
+                        </SelectItem>
                         <SelectItem value="Ditolak">Ditolak</SelectItem>
                       </SelectContent>
                     </Select>
@@ -387,10 +466,7 @@ export default function ModerasiLaporanPage() {
                   >
                     Batal
                   </Button>
-                  <Button
-                    type="button"
-                    onClick={handleSaveStatus}
-                  >
+                  <Button type="button" onClick={handleSaveStatus}>
                     Simpan Status Baru
                   </Button>
                 </div>

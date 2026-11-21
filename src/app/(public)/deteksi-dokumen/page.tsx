@@ -1,22 +1,45 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
-import { LuCheck, LuFileText, LuLoaderCircle, LuShieldAlert, LuUpload, LuX } from "react-icons/lu";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import {
+  LuCheck,
+  LuFileText,
+  LuLoaderCircle,
+  LuShieldAlert,
+  LuUpload,
+  LuX,
+} from "react-icons/lu";
 import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { toast } from "@/components/ui/toast";
 import { useTRPC } from "@/trpc/client";
 
 const MAX_FILE_SIZE_MB = 5;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
-const ALLOWED_MIME_TYPES = ["application/pdf", "image/jpeg", "image/png"] as const;
+const ALLOWED_MIME_TYPES = [
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+] as const;
 const ALLOWED_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png"];
 
 const documentFormSchema = z.object({
@@ -36,8 +59,12 @@ const documentFormSchema = z.object({
       }
 
       const fileName = file.name.toLowerCase();
-      const hasValidExtension = ALLOWED_EXTENSIONS.some((ext) => fileName.endsWith(ext));
-      const hasValidMime = ALLOWED_MIME_TYPES.includes(file.type as (typeof ALLOWED_MIME_TYPES)[number]);
+      const hasValidExtension = ALLOWED_EXTENSIONS.some((ext) =>
+        fileName.endsWith(ext),
+      );
+      const hasValidMime = ALLOWED_MIME_TYPES.includes(
+        file.type as (typeof ALLOWED_MIME_TYPES)[number],
+      );
 
       if (!hasValidMime && !hasValidExtension) {
         ctx.addIssue({
@@ -127,7 +154,10 @@ export default function DeteksiDokumenPage() {
       setProgress((prev) => {
         if (prev >= 95) return 95;
         const remaining = 95 - prev;
-        const step = Math.max(1, Math.round(remaining * (Math.random() * 0.16 + 0.06)));
+        const step = Math.max(
+          1,
+          Math.round(remaining * (Math.random() * 0.16 + 0.06)),
+        );
         return Math.min(95, prev + step);
       });
     }, 450);
@@ -135,13 +165,20 @@ export default function DeteksiDokumenPage() {
     return () => clearInterval(interval);
   }, [mutation.isPending]);
 
-  const currentStep = [...DOCUMENT_ANALYSIS_STEPS].reverse().find((s) => progress >= s.threshold) ?? DOCUMENT_ANALYSIS_STEPS[0];
+  const currentStep =
+    [...DOCUMENT_ANALYSIS_STEPS]
+      .reverse()
+      .find((s) => progress >= s.threshold) ?? DOCUMENT_ANALYSIS_STEPS[0];
 
   return (
-    <div className="container mx-auto max-w-2xl px-4 py-12 sm:px-6 sm:py-16 space-y-6">
-      <div className="text-center space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Deteksi Dokumen Mencurigakan</h1>
-        <p className="text-sm text-muted-foreground sm:text-base">Unggah dokumen atau gambar untuk mendeteksi potensi penipuan</p>
+    <div className="container mx-auto max-w-2xl space-y-6 px-4 py-12 sm:px-6 sm:py-16">
+      <div className="space-y-2 text-center">
+        <h1 className="font-bold text-2xl tracking-tight sm:text-3xl">
+          Deteksi Dokumen Mencurigakan
+        </h1>
+        <p className="text-muted-foreground text-sm sm:text-base">
+          Unggah dokumen atau gambar untuk mendeteksi potensi penipuan
+        </p>
       </div>
 
       {/* Peringatan Privasi */}
@@ -153,17 +190,25 @@ export default function DeteksiDokumenPage() {
 
           <div className="space-y-2.5">
             <div className="space-y-1">
-              <h2 className="text-sm font-bold tracking-tight text-foreground">Sensor Data Sensitif Sebelum Mengunggah</h2>
-              <p className="text-xs leading-relaxed text-muted-foreground sm:text-sm">
-                Pastikan Anda telah menutupi informasi pribadi berikut sebelum memulai ekstraksi teks:
+              <h2 className="font-bold text-foreground text-sm tracking-tight">
+                Sensor Data Sensitif Sebelum Mengunggah
+              </h2>
+              <p className="text-muted-foreground text-xs leading-relaxed sm:text-sm">
+                Pastikan Anda telah menutupi informasi pribadi berikut sebelum
+                memulai ekstraksi teks:
               </p>
             </div>
 
             <div className="flex flex-wrap gap-1.5">
-              {["NIK / KTP", "Nomor Rekening", "Kode OTP", "Alamat Lengkap"].map((item) => (
+              {[
+                "NIK / KTP",
+                "Nomor Rekening",
+                "Kode OTP",
+                "Alamat Lengkap",
+              ].map((item) => (
                 <span
                   key={item}
-                  className="inline-flex items-center rounded-md border border-primary/20 bg-background px-2.5 py-0.5 text-xs font-medium text-foreground"
+                  className="inline-flex items-center rounded-md border border-primary/20 bg-background px-2.5 py-0.5 font-medium text-foreground text-xs"
                 >
                   {item}
                 </span>
@@ -191,7 +236,8 @@ export default function DeteksiDokumenPage() {
             }}
             children={(field) => {
               const selectedFile = field.state.value;
-              const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+              const isInvalid =
+                field.state.meta.isTouched && !field.state.meta.isValid;
 
               const selectFile = (file: File | undefined) => {
                 if (!file) return;
@@ -257,8 +303,13 @@ export default function DeteksiDokumenPage() {
                           <LuUpload className="h-6 w-6 text-foreground" />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-base font-semibold">Tarik &amp; lepas file di sini, atau cari file</p>
-                          <p className="text-xs text-muted-foreground">Hanya PDF, JPG, PNG | Maksimal {MAX_FILE_SIZE_MB} MB, Maksimal 5 Halaman</p>
+                          <p className="font-semibold text-base">
+                            Tarik &amp; lepas file di sini, atau cari file
+                          </p>
+                          <p className="text-muted-foreground text-xs">
+                            Hanya PDF, JPG, PNG | Maksimal {MAX_FILE_SIZE_MB}{" "}
+                            MB, Maksimal 5 Halaman
+                          </p>
                         </div>
                       </div>
                     ) : (
@@ -271,14 +322,20 @@ export default function DeteksiDokumenPage() {
                         <div className="flex items-center gap-3 overflow-hidden">
                           <div
                             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${
-                              isInvalid ? "bg-destructive/10 text-destructive" : "bg-muted text-foreground"
+                              isInvalid
+                                ? "bg-destructive/10 text-destructive"
+                                : "bg-muted text-foreground"
                             }`}
                           >
                             <LuFileText className="h-5 w-5" />
                           </div>
                           <div className="truncate">
-                            <p className="truncate text-sm font-medium">{selectedFile.name}</p>
-                            <p className="text-xs text-muted-foreground tabular-nums">{formatFileSize(selectedFile.size)}</p>
+                            <p className="truncate font-medium text-sm">
+                              {selectedFile.name}
+                            </p>
+                            <p className="text-muted-foreground text-xs tabular-nums">
+                              {formatFileSize(selectedFile.size)}
+                            </p>
                           </div>
                         </div>
                         <Button
@@ -302,7 +359,7 @@ export default function DeteksiDokumenPage() {
           />
 
           {/* Box Persetujuan & Retensi Data */}
-          <div className="rounded-xl border bg-card p-4 space-y-4">
+          <div className="space-y-4 rounded-xl border bg-card p-4">
             {/* Field 2: Consent Wajib */}
             <form.Field
               name="consentAccepted"
@@ -310,7 +367,8 @@ export default function DeteksiDokumenPage() {
                 onChange: documentFormSchema.shape.consentAccepted,
               }}
               children={(field) => {
-                const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+                const isInvalid =
+                  field.state.meta.isTouched && !field.state.meta.isValid;
 
                 return (
                   <Field data-invalid={isInvalid}>
@@ -329,12 +387,14 @@ export default function DeteksiDokumenPage() {
                       <div className="space-y-1 leading-snug">
                         <FieldLabel
                           htmlFor={field.name}
-                          className="text-sm font-medium cursor-pointer"
+                          className="cursor-pointer font-medium text-sm"
                         >
-                          Saya menyetujui pemrosesan dokumen ini untuk analisis keamanan <span className="text-destructive">*</span>
+                          Saya menyetujui pemrosesan dokumen ini untuk analisis
+                          keamanan <span className="text-destructive">*</span>
                         </FieldLabel>
                         <FieldDescription className="text-xs">
-                          File fisik tidak disimpan secara permanen di server setelah ekstraksi selesai.
+                          File fisik tidak disimpan secara permanen di server
+                          setelah ekstraksi selesai.
                         </FieldDescription>
                       </div>
                     </div>
@@ -361,18 +421,21 @@ export default function DeteksiDokumenPage() {
                       id={field.name}
                       checked={Boolean(field.state.value)}
                       disabled={mutation.isPending}
-                      onCheckedChange={(checked) => field.handleChange(checked === true)}
+                      onCheckedChange={(checked) =>
+                        field.handleChange(checked === true)
+                      }
                       className="mt-0.5"
                     />
                     <div className="space-y-1 leading-snug">
                       <FieldLabel
                         htmlFor={field.name}
-                        className="text-sm font-medium cursor-pointer"
+                        className="cursor-pointer font-medium text-sm"
                       >
                         Simpan teks hasil ekstraksi sementara untuk pelaporan
                       </FieldLabel>
                       <FieldDescription className="text-xs">
-                        Jika tidak dicentang, teks hasil ekstraksi akan langsung dihapus setelah analisis selesai.
+                        Jika tidak dicentang, teks hasil ekstraksi akan langsung
+                        dihapus setelah analisis selesai.
                       </FieldDescription>
                     </div>
                   </div>
@@ -386,7 +449,7 @@ export default function DeteksiDokumenPage() {
           type="submit"
           form="analyze-document-form"
           disabled={mutation.isPending}
-          className="w-full h-11 text-sm font-medium"
+          className="h-11 w-full font-medium text-sm"
         >
           Mulai Pengecekan
         </Button>
@@ -394,18 +457,19 @@ export default function DeteksiDokumenPage() {
 
       {/* Loading Modal dengan Progress Bar */}
       <Dialog open={mutation.isPending}>
-        <DialogContent
-          showCloseButton={false}
-          className="sm:max-w-md"
-        >
+        <DialogContent showCloseButton={false} className="sm:max-w-md">
           <DialogHeader className="space-y-1 text-left">
             <div className="flex items-center gap-2.5">
               <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary">
                 <LuShieldAlert className="h-4 w-4" />
               </div>
               <div>
-                <DialogTitle className="text-base font-semibold">Memeriksa Keamanan Dokumen</DialogTitle>
-                <DialogDescription className="text-xs">Proses ekstraksi &amp; analisis memakan waktu beberapa detik</DialogDescription>
+                <DialogTitle className="font-semibold text-base">
+                  Memeriksa Keamanan Dokumen
+                </DialogTitle>
+                <DialogDescription className="text-xs">
+                  Proses ekstraksi &amp; analisis memakan waktu beberapa detik
+                </DialogDescription>
               </div>
             </div>
           </DialogHeader>
@@ -413,8 +477,12 @@ export default function DeteksiDokumenPage() {
           <div className="space-y-4 pt-2">
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-foreground">{currentStep.label}</span>
-                <span className="font-mono text-muted-foreground tabular-nums">{progress}%</span>
+                <span className="font-medium text-foreground">
+                  {currentStep.label}
+                </span>
+                <span className="font-mono text-muted-foreground tabular-nums">
+                  {progress}%
+                </span>
               </div>
               <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
                 <div
@@ -426,7 +494,9 @@ export default function DeteksiDokumenPage() {
 
             <div className="space-y-1.5 rounded-lg border bg-muted/40 p-3 text-xs">
               {DOCUMENT_ANALYSIS_STEPS.map((step, idx) => {
-                const isDone = progress > (DOCUMENT_ANALYSIS_STEPS[idx + 1]?.threshold ?? 100);
+                const isDone =
+                  progress >
+                  (DOCUMENT_ANALYSIS_STEPS[idx + 1]?.threshold ?? 100);
                 const isActive = currentStep.threshold === step.threshold;
 
                 return (
@@ -441,7 +511,15 @@ export default function DeteksiDokumenPage() {
                     ) : (
                       <span className="h-3.5 w-3.5 shrink-0 rounded-full border border-muted-foreground/40" />
                     )}
-                    <span className={isActive ? "font-medium text-foreground" : "text-muted-foreground"}>{step.label.replace("...", "")}</span>
+                    <span
+                      className={
+                        isActive
+                          ? "font-medium text-foreground"
+                          : "text-muted-foreground"
+                      }
+                    >
+                      {step.label.replace("...", "")}
+                    </span>
                   </div>
                 );
               })}

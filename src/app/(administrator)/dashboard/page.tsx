@@ -2,10 +2,29 @@
 
 import { useState } from "react";
 import { LuCircleCheck, LuCircleHelp, LuTriangleAlert } from "react-icons/lu";
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const TREND_DATA_HARIAN = [
   { day: "Sen", volume: 1420 },
@@ -50,62 +69,79 @@ export default function AdminDashboardPage() {
   const [trendRange, setTrendRange] = useState("harian");
   const [modusFilter, setModusFilter] = useState("semua");
 
-  const activeTrendData = trendRange === "harian" ? TREND_DATA_HARIAN : TREND_DATA_MINGGUAN;
+  const activeTrendData =
+    trendRange === "harian" ? TREND_DATA_HARIAN : TREND_DATA_MINGGUAN;
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
       {/* Header Judul */}
       <div className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Dashboard Admin</h1>
-        <p className="text-sm text-muted-foreground">Statistik Sistem &amp; Pemantauan Penipuan</p>
+        <h1 className="font-bold text-2xl tracking-tight sm:text-3xl">
+          Dashboard Admin
+        </h1>
+        <p className="text-muted-foreground text-sm">
+          Statistik Sistem &amp; Pemantauan Penipuan
+        </p>
       </div>
 
       {/* Section 1: Kartu Statistik */}
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-foreground">Kartu Statistik</h2>
+        <h2 className="font-semibold text-foreground text-sm">
+          Kartu Statistik
+        </h2>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {/* Total Pemeriksaan */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Pemeriksaan</CardTitle>
+              <CardTitle className="font-medium text-muted-foreground text-sm">
+                Total Pemeriksaan
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-1">
-              <p className="text-3xl font-bold tracking-tight">12,450</p>
-              <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">+12% minggu ini</p>
+              <p className="font-bold text-3xl tracking-tight">12,450</p>
+              <p className="font-medium text-emerald-600 text-xs dark:text-emerald-400">
+                +12% minggu ini
+              </p>
             </CardContent>
           </Card>
 
           {/* Indikasi Penipuan */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Indikasi Penipuan</CardTitle>
+              <CardTitle className="font-medium text-muted-foreground text-sm">
+                Indikasi Penipuan
+              </CardTitle>
               <LuTriangleAlert className="h-4 w-4 text-destructive" />
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold tracking-tight">5,840</p>
+              <p className="font-bold text-3xl tracking-tight">5,840</p>
             </CardContent>
           </Card>
 
           {/* Pesan Normal */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Pesan Normal</CardTitle>
+              <CardTitle className="font-medium text-muted-foreground text-sm">
+                Pesan Normal
+              </CardTitle>
               <LuCircleCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold tracking-tight">4,910</p>
+              <p className="font-bold text-3xl tracking-tight">4,910</p>
             </CardContent>
           </Card>
 
           {/* Belum Pasti */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Belum Pasti</CardTitle>
+              <CardTitle className="font-medium text-muted-foreground text-sm">
+                Belum Pasti
+              </CardTitle>
               <LuCircleHelp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold tracking-tight">1,700</p>
+              <p className="font-bold text-3xl tracking-tight">1,700</p>
             </CardContent>
           </Card>
         </div>
@@ -113,13 +149,17 @@ export default function AdminDashboardPage() {
 
       {/* Section 2: Visualisasi Data */}
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-foreground">Visualisasi Data</h2>
+        <h2 className="font-semibold text-foreground text-sm">
+          Visualisasi Data
+        </h2>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Grafik Kiri: Tren Pemeriksaan */}
           <Card className="flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between gap-2 pb-4">
-              <CardTitle className="text-base font-semibold">Tren Pemeriksaan</CardTitle>
+              <CardTitle className="font-semibold text-base">
+                Tren Pemeriksaan
+              </CardTitle>
 
               <Select
                 value={trendRange}
@@ -147,13 +187,7 @@ export default function AdminDashboardPage() {
                   margin={{ top: 10, right: 12, left: -12, bottom: 0 }}
                 >
                   <defs>
-                    <linearGradient
-                      id="fillVolume"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
+                    <linearGradient id="fillVolume" x1="0" y1="0" x2="0" y2="1">
                       <stop
                         offset="5%"
                         stopColor="var(--color-volume)"
@@ -166,10 +200,7 @@ export default function AdminDashboardPage() {
                       />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid
-                    vertical={false}
-                    strokeDasharray="3 3"
-                  />
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
                   <XAxis
                     dataKey="day"
                     tickLine={false}
@@ -201,7 +232,9 @@ export default function AdminDashboardPage() {
           {/* Grafik Kanan: Statistik Modus Penipuan */}
           <Card className="flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between gap-2 pb-4">
-              <CardTitle className="text-base font-semibold">Statistik Modus Penipuan</CardTitle>
+              <CardTitle className="font-semibold text-base">
+                Statistik Modus Penipuan
+              </CardTitle>
 
               <Select
                 value={modusFilter}
@@ -230,10 +263,7 @@ export default function AdminDashboardPage() {
                   layout="vertical"
                   margin={{ top: 4, right: 20, left: 10, bottom: 4 }}
                 >
-                  <CartesianGrid
-                    horizontal={false}
-                    strokeDasharray="3 3"
-                  />
+                  <CartesianGrid horizontal={false} strokeDasharray="3 3" />
                   <YAxis
                     dataKey="modus"
                     type="category"
@@ -242,10 +272,7 @@ export default function AdminDashboardPage() {
                     width={115}
                     tick={{ fontSize: 12 }}
                   />
-                  <XAxis
-                    type="number"
-                    hide
-                  />
+                  <XAxis type="number" hide />
                   <ChartTooltip
                     cursor={false}
                     content={<ChartTooltipContent hideLabel />}
