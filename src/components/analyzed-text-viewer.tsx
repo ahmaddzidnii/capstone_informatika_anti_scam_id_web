@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/suspicious/noArrayIndexKey: false positive, this is a static list of segments that will never change */
 "use client";
 
 import { useMemo, useState } from "react";

@@ -102,6 +102,7 @@ export async function loadHighlighter(language: string) {
         lines: tokens.map((line) =>
           line.map((token, index) => (
             <span
+              // biome-ignore lint/suspicious/noArrayIndexKey: false positive, this is a static list of tokens that will never change
               key={index}
               style={token.htmlStyle as React.CSSProperties}
               className="text-(--shiki-light) dark:text-(--shiki-dark)"

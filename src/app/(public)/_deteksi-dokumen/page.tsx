@@ -260,9 +260,12 @@ export default function DeteksiDokumenPage() {
                     tabIndex={0}
                     aria-invalid={isInvalid}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
+                      if (
+                        e.target === e.currentTarget &&
+                        (e.key === "Enter" || e.key === " ")
+                      ) {
                         e.preventDefault();
-                        fileInputRef.current?.click();
+                        if (!mutation.isPending) fileInputRef.current?.click();
                       }
                     }}
                     onDragOver={(e) => {
@@ -314,7 +317,9 @@ export default function DeteksiDokumenPage() {
                         </div>
                       </div>
                     ) : (
+                      // biome-ignore lint/a11y/noStaticElementInteractions: false positive
                       <div
+                        role="presentation"
                         onClick={(e) => e.stopPropagation()}
                         className={`mx-auto flex max-w-md items-center justify-between gap-3 rounded-lg border bg-background p-3 text-left ${
                           isInvalid ? "border-destructive/50" : ""

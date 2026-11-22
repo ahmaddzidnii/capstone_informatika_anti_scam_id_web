@@ -297,6 +297,7 @@ export function HistoryTable() {
                   </Label>
                   <ul className="list-disc space-y-1 pl-5 text-muted-foreground text-sm">
                     {selectedDetail.indicators.map((ind, i) => (
+                      // biome-ignore lint/suspicious/noArrayIndexKey: false positive, this is a static list of indicators that will never change
                       <li key={i}>{ind}</li>
                     ))}
                   </ul>

@@ -29,6 +29,7 @@ export function HistoryTableSkeleton() {
           </TableHeader>
           <TableBody>
             {Array.from({ length: 5 }).map((_, index) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: false positive, this is a static list of skeleton rows that will never change
               <TableRow key={index}>
                 <TableCell className="text-center">
                   <Skeleton className="mx-auto h-4 w-5" />

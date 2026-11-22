@@ -29,9 +29,9 @@ function bytesToBase62(bytes: Uint8Array): string {
 
   const digits: number[] = [];
   for (let i = leadingZeros; i < bytes.length; i++) {
-    let carry = bytes[i]!;
+    let carry = bytes[i] ?? 0;
     for (let j = 0; j < digits.length; j++) {
-      carry += digits[j]! << 8;
+      carry += (digits[j] ?? 0) << 8;
       digits[j] = carry % 62;
       carry = (carry / 62) | 0;
     }
@@ -43,7 +43,7 @@ function bytesToBase62(bytes: Uint8Array): string {
 
   let encoded = "0".repeat(leadingZeros);
   for (let i = digits.length - 1; i >= 0; i--) {
-    encoded += BASE62_ALPHABET[digits[i]!];
+    encoded += BASE62_ALPHABET[digits[i] ?? 0] ?? "";
   }
   return encoded;
 }
@@ -61,12 +61,12 @@ function base62ToBytes(str: string): Uint8Array | null {
 
   const bytes: number[] = [];
   for (let i = leadingZeros; i < str.length; i++) {
-    const charIndex = BASE62_ALPHABET.indexOf(str[i]!);
+    const charIndex = BASE62_ALPHABET.indexOf(str[i] ?? "");
     if (charIndex === -1) return null;
 
     let carry = charIndex;
     for (let j = 0; j < bytes.length; j++) {
-      carry += bytes[j]! * 62;
+      carry += (bytes[j] ?? 0) * 62;
       bytes[j] = carry & 0xff;
       carry >>= 8;
     }
@@ -78,7 +78,7 @@ function base62ToBytes(str: string): Uint8Array | null {
 
   const result = new Uint8Array(leadingZeros + bytes.length);
   for (let i = 0; i < bytes.length; i++) {
-    result[leadingZeros + i] = bytes[bytes.length - 1 - i]!;
+    result[leadingZeros + i] = bytes[bytes.length - 1 - i] ?? 0;
   }
   return result;
 }

@@ -1,20 +1,11 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { env } from "@/env";
 import {
   type PredictTextResponse,
   predictTextAI,
 } from "@/server/services/ai-client";
 import { botProcedure, createTRPCRouter } from "@/trpc/init";
 import { ScamModusEnum } from "./report";
-
-interface FastAPIPredictResponse {
-  label: "SCAM" | "NORMAL" | "UNCERTAIN";
-  score: number;
-  model_version: string;
-  indicators: string[];
-  recommendation: string;
-}
 
 export const botRouter = createTRPCRouter({
   // Pencatatan penggunaan perintah informasi (/start, /panduan, /bantuan)[cite: 9]
@@ -72,8 +63,8 @@ export const botRouter = createTRPCRouter({
       const check = await ctx.prisma.check.create({
         data: {
           inputSource: "TELEGRAM_BOT",
-          content: null,
-          isContentSaved: false,
+          content: input.text,
+          isContentSaved: true,
           predictionLabel: aiResult.label,
           confidenceScore: aiResult.score,
           modelVersion: aiResult.model_version,
