@@ -1,9 +1,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import {
+  LuArrowLeft,
   LuCheck,
   LuCircleAlert,
   LuCircleCheck,
@@ -36,6 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { callbackSDK } from "@/lib/callback-sdk";
 import { useTRPC } from "@/trpc/client";
 
 function formatFileSize(bytes: number): string {
@@ -53,6 +56,7 @@ function formatDate(date: Date | string): string {
     minute: "2-digit",
   }).format(new Date(date));
 }
+
 function getVerdictConfig(label: string) {
   const normalized = label.trim().toUpperCase();
 
@@ -149,12 +153,21 @@ export default function CheckResultPage() {
 
   const hintIsDocument = searchParams.get("type") === "dokumen";
 
+  // Decode dan validasi parameter ?back= menggunakan callbackSDK
+  const backToken = searchParams.get("back");
+  const backPayload = callbackSDK.decode(backToken);
+  const backHref = backPayload ? callbackSDK.toUrl(backToken) : null;
+  const backLabel =
+    backPayload?.path === "/riwayat" ? "Kembali ke Riwayat" : "Kembali";
+
   if (isLoading) {
     return <ResultPageSkeleton />;
   }
 
   if (isError || !data || data.deletedAt) {
     const isNotFound = !isError && (!data || Boolean(data.deletedAt));
+    const fallbackHref =
+      backHref ?? (hintIsDocument ? "/deteksi-dokumen" : "/deteksi-pesan");
 
     return (
       <div className="container mx-auto max-w-md space-y-5 px-4 py-24 text-center">
@@ -178,13 +191,9 @@ export default function CheckResultPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() =>
-              router.push(
-                hintIsDocument ? "/deteksi-dokumen" : "/deteksi-pesan",
-              )
-            }
+            onClick={() => router.push(fallbackHref)}
           >
-            Kembali
+            {backLabel}
           </Button>
           {!isNotFound && (
             <Button
@@ -223,7 +232,6 @@ export default function CheckResultPage() {
   const verdict = getVerdictConfig(data.predictionLabel);
   const VerdictIcon = verdict.Icon;
 
-  // Ambil teks dari pesan (data.content) atau hasil OCR dokumen (data.document?.extractedText)
   const extractedDocText =
     data.document && "extractedText" in data.document
       ? (data.document.extractedText as string | null)
@@ -243,22 +251,36 @@ export default function CheckResultPage() {
   return (
     <div className="container mx-auto max-w-3xl space-y-8 px-4 py-10 sm:px-6 sm:py-14">
       {/* Editorial Header */}
-      <header className="space-y-1.5">
-        <h1 className="font-bold text-2xl tracking-tight sm:text-3xl">
-          Hasil Pemeriksaan {isDocument ? "Dokumen" : "Pesan"}
-        </h1>
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground text-xs">
-          <span className="font-mono">#{data.id.slice(0, 8)}</span>
-          <span>·</span>
-          <span>{formatDate(data.createdAt)}</span>
-          {data.latencyMs !== null && (
-            <>
-              <span>·</span>
-              <span className="tabular-nums">
-                {(data.latencyMs / 1000).toFixed(2)} dtk
-              </span>
-            </>
-          )}
+      <header className="space-y-3">
+        {backHref && (
+          <div>
+            <Link
+              href={backHref}
+              className="inline-flex items-center gap-1.5 font-medium text-muted-foreground text-xs transition-colors hover:text-foreground"
+            >
+              <LuArrowLeft className="h-3.5 w-3.5" />
+              {backLabel}
+            </Link>
+          </div>
+        )}
+
+        <div className="space-y-1.5">
+          <h1 className="font-bold text-2xl tracking-tight sm:text-3xl">
+            Hasil Pemeriksaan {isDocument ? "Dokumen" : "Pesan"}
+          </h1>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground text-xs">
+            <span className="font-mono">#{data.id.slice(0, 8)}</span>
+            <span>·</span>
+            <span>{formatDate(data.createdAt)}</span>
+            {data.latencyMs !== null && (
+              <>
+                <span>·</span>
+                <span className="tabular-nums">
+                  {(data.latencyMs / 1000).toFixed(2)} dtk
+                </span>
+              </>
+            )}
+          </div>
         </div>
       </header>
 

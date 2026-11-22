@@ -60,84 +60,100 @@ export function HistoryHeader() {
       </section>
 
       {/* Filter & Pencarian */}
-      <section className="space-y-3 rounded-xl border bg-card p-4">
+      <section className="rounded-xl border bg-card p-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-12 sm:items-end">
-          <div className="space-y-1.5 sm:col-span-6">
-            <Label htmlFor="search-history" className="font-medium text-xs">
+          <div className="flex flex-col gap-2 sm:col-span-6">
+            <Label
+              htmlFor="search-history"
+              className="font-medium text-xs leading-none"
+            >
               Pencarian
             </Label>
             <div className="relative">
-              <LuSearch className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <LuSearch className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="search-history"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Cari pesan atau nama file..."
-                className="pl-9"
+                className="h-9 pl-9"
               />
             </div>
           </div>
 
-          <div className="space-y-1.5 sm:col-span-3">
-            <Label className="font-medium text-xs">Jenis</Label>
-            <Select
-              value={filters.type}
-              onValueChange={(value) =>
-                void setFilters({
-                  type: (value as typeof filters.type) ?? "semua",
-                  page: 1,
-                })
-              }
+          <div className="flex flex-col gap-2 sm:col-span-3">
+            <Label
+              htmlFor="filter-type"
+              className="font-medium text-xs leading-none"
             >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Semua Jenis" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="semua">Semua</SelectItem>
-                <SelectItem value="teks">Teks</SelectItem>
-                <SelectItem value="dokumen">Dokumen</SelectItem>
-              </SelectContent>
-            </Select>
+              Jenis
+            </Label>
+            <div>
+              <Select
+                value={filters.type}
+                onValueChange={(value) =>
+                  void setFilters({
+                    type: (value as typeof filters.type) ?? "semua",
+                    page: 1,
+                  })
+                }
+              >
+                <SelectTrigger id="filter-type" className="h-9 w-full">
+                  <SelectValue placeholder="Semua Jenis" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="semua">Semua</SelectItem>
+                  <SelectItem value="teks">Teks</SelectItem>
+                  <SelectItem value="dokumen">Dokumen</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <div className="space-y-1.5 sm:col-span-3">
-            <Label className="font-medium text-xs">Status</Label>
-            <Select
-              value={filters.status}
-              onValueChange={(value) =>
-                void setFilters({
-                  status: (value as typeof filters.status) ?? "semua",
-                  page: 1,
-                })
-              }
+          <div className="flex flex-col gap-2 sm:col-span-3">
+            <Label
+              htmlFor="filter-status"
+              className="font-medium text-xs leading-none"
             >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Semua Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="semua">Semua</SelectItem>
-                <SelectItem value="penipuan">Penipuan</SelectItem>
-                <SelectItem value="normal">Normal</SelectItem>
-                <SelectItem value="belum-pasti">Belum Pasti</SelectItem>
-              </SelectContent>
-            </Select>
+              Status
+            </Label>
+            <div className="flex items-center gap-2">
+              <Select
+                value={filters.status}
+                onValueChange={(value) =>
+                  void setFilters({
+                    status: (value as typeof filters.status) ?? "semua",
+                    page: 1,
+                  })
+                }
+              >
+                <SelectTrigger id="filter-status" className="h-9 w-full">
+                  <SelectValue placeholder="Semua Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="semua">Semua</SelectItem>
+                  <SelectItem value="penipuan">Penipuan</SelectItem>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="belum-pasti">Belum Pasti</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {isFiltered && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={handleReset}
+                  title="Reset Filter"
+                  aria-label="Reset Filter"
+                  className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground"
+                >
+                  <LuRotateCcw className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
-
-        {isFiltered && (
-          <div className="flex justify-end border-t pt-3">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={handleReset}
-              className="h-8 gap-1.5 text-muted-foreground text-xs hover:text-foreground"
-            >
-              <LuRotateCcw className="h-3.5 w-3.5" />
-              Reset Filter
-            </Button>
-          </div>
-        )}
       </section>
     </>
   );

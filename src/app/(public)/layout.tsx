@@ -2,6 +2,9 @@ import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { Navbar } from "@/components/navbar";
 
+const TELEGRAM_BOT_URL =
+  process.env.NEXT_PUBLIC_TELEGRAM_BOT_URL || "https://t.me/antiscamid_dev_bot";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -46,17 +49,19 @@ export default function RootLayout({
                       Deteksi Pesan
                     </Link>
                   </li>
-                  <li>
+                  {/* <li>
                     <Link
                       href="/deteksi-dokumen"
                       className="transition-colors hover:text-foreground"
                     >
                       Deteksi Dokumen
                     </Link>
-                  </li>
+                  </li> */}
                   <li>
                     <Link
-                      href="#"
+                      href={TELEGRAM_BOT_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="transition-colors hover:text-foreground"
                     >
                       Telegram Bot

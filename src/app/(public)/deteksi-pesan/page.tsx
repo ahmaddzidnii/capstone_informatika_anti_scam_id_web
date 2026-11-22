@@ -2,9 +2,14 @@
 
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { useRouter } from "nextjs-toploader/app";
 import { useEffect, useState } from "react";
-import { LuCheck, LuLoaderCircle, LuShieldAlert } from "react-icons/lu";
+import {
+  LuCheck,
+  LuCircleAlert,
+  LuLoaderCircle,
+  LuShieldAlert,
+} from "react-icons/lu";
 import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -15,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Field, FieldError, FieldGroup } from "@/components/ui/field";
+import { Field, FieldGroup } from "@/components/ui/field";
 import {
   InputGroup,
   InputGroupAddon,
@@ -32,7 +37,7 @@ const formSchema = z.object({
   text: z
     .string()
     .trim()
-    .min(MIN_CHARS, "Pesan terlalu pendek untuk dianalisis.")
+    .min(MIN_CHARS, `Minimal ${MIN_CHARS} karakter untuk dapat dianalisis.`)
     .max(MAX_CHARS, `Pesan maksimal ${MAX_CHARS} karakter.`),
 });
 
@@ -73,6 +78,7 @@ export default function DeteksiPesanPage() {
     },
     validators: {
       onSubmit: formSchema,
+      onChange: formSchema,
     },
     onSubmit: async ({ value }) => {
       mutation.mutate({ text: value.text.trim(), saveContent: true });
@@ -125,15 +131,30 @@ export default function DeteksiPesanPage() {
         className="space-y-4"
       >
         <FieldGroup>
-          <form.Field
-            name="text"
-            children={(field) => {
-              const isInvalid =
-                field.state.meta.isTouched && !field.state.meta.isValid;
+          <form.Field name="text">
+            {(field) => {
+              const showError =
+                (field.state.meta.isTouched ||
+                  form.state.submissionAttempts > 0) &&
+                !field.state.meta.isValid;
+
+              const firstError = field.state.meta.errors[0];
+              const errorMessage =
+                typeof firstError === "string"
+                  ? firstError
+                  : firstError?.message;
+
+              const trimmedLength = field.state.value.trim().length;
 
               return (
-                <Field data-invalid={isInvalid}>
-                  <InputGroup>
+                <Field data-invalid={showError}>
+                  <InputGroup
+                    className={
+                      showError
+                        ? "border-destructive ring-2 ring-destructive/15 transition-colors"
+                        : "transition-colors"
+                    }
+                  >
                     <InputGroupTextarea
                       id={field.name}
                       name={field.name}
@@ -145,21 +166,43 @@ export default function DeteksiPesanPage() {
                       placeholder="Tulis atau tempel pesan mencurigakan di sini (contoh: SMS hadiah, pesan WhatsApp penipuan, tautan mencurigakan)..."
                       rows={8}
                       className="min-h-[220px] resize-none text-sm sm:text-base"
-                      aria-invalid={isInvalid}
+                      aria-invalid={showError}
                       disabled={mutation.isPending}
                     />
-                    <InputGroupAddon align="block-end">
-                      <InputGroupText className="ml-auto tabular-nums">
+
+                    <InputGroupAddon
+                      align="block-end"
+                      className="flex items-center justify-between gap-2 border-t bg-muted/30 px-3 py-2"
+                    >
+                      {showError && errorMessage ? (
+                        <span
+                          role="alert"
+                          className="flex items-center gap-1.5 font-medium text-destructive text-xs"
+                        >
+                          <LuCircleAlert className="h-3.5 w-3.5 shrink-0" />
+                          <span>{errorMessage}</span>
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">
+                          {trimmedLength > 0 && trimmedLength < MIN_CHARS
+                            ? `Kurang ${MIN_CHARS - trimmedLength} karakter lagi`
+                            : `Minimal ${MIN_CHARS} karakter`}
+                        </span>
+                      )}
+
+                      <InputGroupText
+                        className={`ml-auto shrink-0 text-xs tabular-nums ${
+                          showError ? "font-medium text-destructive" : ""
+                        }`}
+                      >
                         {field.state.value.length}/{MAX_CHARS}
                       </InputGroupText>
                     </InputGroupAddon>
                   </InputGroup>
-
-                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
                 </Field>
               );
             }}
-          />
+          </form.Field>
         </FieldGroup>
 
         <Button
@@ -192,11 +235,10 @@ export default function DeteksiPesanPage() {
           </DialogHeader>
 
           <div className="space-y-4 pt-2">
-            {/* Bar & Persentase */}
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-medium text-foreground">
-                  {currentStep.label}
+                  {currentStep?.label}
                 </span>
                 <span className="font-mono text-muted-foreground tabular-nums">
                   {progress}%
@@ -210,12 +252,11 @@ export default function DeteksiPesanPage() {
               </div>
             </div>
 
-            {/* Mini Checklist Tahapan */}
             <div className="space-y-1.5 rounded-lg border bg-muted/40 p-3 text-xs">
               {ANALYSIS_STEPS.map((step, idx) => {
                 const isDone =
                   progress > (ANALYSIS_STEPS[idx + 1]?.threshold ?? 100);
-                const isActive = currentStep.threshold === step.threshold;
+                const isActive = currentStep?.threshold === step.threshold;
 
                 return (
                   <div

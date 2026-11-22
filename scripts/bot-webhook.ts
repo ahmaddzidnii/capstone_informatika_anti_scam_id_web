@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { env } from "@/env";
-import { bot } from "@/server/telegram/bot";
+import { bot, registerBotCommands } from "@/server/telegram/bot";
 
 const action = process.argv[2] ?? "set";
 const customUrlArg = process.argv
@@ -41,11 +41,13 @@ async function main() {
 
     await bot.api.setWebhook(webhookUrl, {
       secret_token: env.TELEGRAM_WEBHOOK_SECRET,
-      allowed_updates: ["message"],
+      allowed_updates: ["message", "callback_query"],
       drop_pending_updates: false,
     });
 
-    console.log("✅ Webhook berhasil didaftarkan!");
+    await registerBotCommands();
+
+    console.log("✅ Webhook & menu perintah berhasil didaftarkan!");
     console.log(`   Target URL : ${webhookUrl}`);
     console.log(
       `   Secret     : ${env.TELEGRAM_WEBHOOK_SECRET ? "Aktif (terpasang)" : "Tidak diset"}`,

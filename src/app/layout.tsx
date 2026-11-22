@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
+
+import NextTopLoader from "nextjs-toploader";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { AuthProvider } from "@/components/auth-context";
 import { Toaster } from "@/components/ui/toast";
@@ -35,6 +37,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="flex min-h-full flex-col">
         <NuqsAdapter>
+          <NextTopLoader
+            color="var(--primary)"
+            showSpinner={false}
+            height={3}
+          />
           <TRPCReactProvider>
             <AuthProvider>
               <TooltipProvider>

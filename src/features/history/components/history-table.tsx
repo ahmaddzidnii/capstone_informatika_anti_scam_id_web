@@ -1,6 +1,7 @@
 "use client";
 
 import { useSuspenseQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { useState } from "react";
 import {
   LuChevronLeft,
@@ -30,6 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { callbackSDK } from "@/lib/callback-sdk";
 import { useTRPC } from "@/trpc/client";
 import { useHistoryFilter } from "../hooks/use-history-filter";
 
@@ -51,9 +53,6 @@ export function HistoryTable() {
   );
 
   type HistoryItem = (typeof data.items)[number];
-  const [selectedDetail, setSelectedDetail] = useState<HistoryItem | null>(
-    null,
-  );
   const [reportTarget, setReportTarget] = useState<HistoryItem | null>(null);
 
   const startItem =
@@ -103,6 +102,20 @@ export function HistoryTable() {
         Belum Pasti ({confidence}%)
       </Badge>
     );
+  };
+
+  const buildDetailHref = (checkId: string) => {
+    const activeQuery: Record<string, string> = {};
+    if (filters.page > 1) activeQuery.page = String(filters.page);
+    if (filters.search) activeQuery.search = filters.search;
+    if (filters.type !== "semua") activeQuery.type = filters.type;
+    if (filters.status !== "semua") activeQuery.status = filters.status;
+
+    return callbackSDK.withBackState(`/checks/${checkId}/results`, {
+      path: "/riwayat",
+      ...(Object.keys(activeQuery).length > 0 ? { query: activeQuery } : {}),
+      intent: "history-detail",
+    });
   };
 
   return (
@@ -164,14 +177,12 @@ export function HistoryTable() {
                       </TableCell>
                       <TableCell className="whitespace-nowrap text-right">
                         <div className="inline-flex items-center gap-1">
-                          <Button
-                            variant="link"
-                            size="sm"
-                            className="h-auto px-2 py-1 text-xs underline"
-                            onClick={() => setSelectedDetail(item)}
+                          <Link
+                            href={buildDetailHref(item.id)}
+                            className="px-2 py-1 font-medium text-primary text-xs underline-offset-4 hover:underline"
                           >
                             Detail
-                          </Button>
+                          </Link>
                           {item.report ? (
                             <span className="px-2 py-1 text-muted-foreground text-xs">
                               Dilaporkan
@@ -250,83 +261,6 @@ export function HistoryTable() {
           </div>
         </div>
       </section>
-
-      {/* MODAL DETAIL RIWAYAT */}
-      <Dialog
-        open={!!selectedDetail}
-        onOpenChange={(open) => !open && setSelectedDetail(null)}
-      >
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="font-bold text-lg">
-              Detail Hasil Pemeriksaan
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              {selectedDetail &&
-                `Diperiksa pada ${new Intl.DateTimeFormat("id-ID", {
-                  dateStyle: "long",
-                  timeStyle: "short",
-                }).format(new Date(selectedDetail.createdAt))}`}
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedDetail && (
-            <div className="space-y-4 pt-2">
-              <div className="flex items-center justify-between rounded-lg border bg-muted/40 p-3">
-                <span className="font-medium text-muted-foreground text-xs">
-                  Status Analisis
-                </span>
-                {renderStatusBadge(selectedDetail)}
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-muted-foreground text-xs">
-                  {selectedDetail.document
-                    ? `Dokumen: ${selectedDetail.document.fileName}`
-                    : "Isi Pesan"}
-                </Label>
-                <div className="max-h-40 overflow-y-auto rounded-md border bg-muted/30 p-3 text-sm leading-relaxed">
-                  {getDisplayContent(selectedDetail)}
-                </div>
-              </div>
-
-              {selectedDetail.indicators.length > 0 && (
-                <div className="space-y-1.5">
-                  <Label className="text-muted-foreground text-xs">
-                    Indikator Analisis
-                  </Label>
-                  <ul className="list-disc space-y-1 pl-5 text-muted-foreground text-sm">
-                    {selectedDetail.indicators.map((ind, i) => (
-                      // biome-ignore lint/suspicious/noArrayIndexKey: false positive, this is a static list of indicators that will never change
-                      <li key={i}>{ind}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {selectedDetail.recommendation && (
-                <div className="space-y-1.5">
-                  <Label className="text-muted-foreground text-xs">
-                    Saran Tindakan
-                  </Label>
-                  <p className="rounded-md border bg-muted/20 p-3 text-muted-foreground text-sm">
-                    {selectedDetail.recommendation}
-                  </p>
-                </div>
-              )}
-
-              <div className="flex justify-end pt-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setSelectedDetail(null)}
-                >
-                  Tutup
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
 
       {/* MODAL LAPOR DARI RIWAYAT */}
       <Dialog

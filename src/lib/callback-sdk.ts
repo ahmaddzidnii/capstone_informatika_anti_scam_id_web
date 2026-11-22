@@ -130,4 +130,14 @@ export const callbackSDK = {
 
     return `${loginPath}?${paramKey}=${token}`;
   },
+
+  withBackState(
+    targetPath: string,
+    backPayload: CallbackPayload,
+    paramKey = "back",
+  ): string {
+    const token = this.encode(backPayload);
+    const separator = targetPath.includes("?") ? "&" : "?";
+    return `${targetPath}${separator}${paramKey}=${token}`;
+  },
 };
