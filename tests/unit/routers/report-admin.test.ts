@@ -50,7 +50,7 @@ describe("reportRouter & adminRouter", () => {
     const res = await caller.admin.reviewReport({
       reportId: "rep-10",
       newStatus: "VERIFIED_SCAM",
-      isCleanForDataset: true,
+
       notes: "Valid penipuan",
     });
 

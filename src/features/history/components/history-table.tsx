@@ -63,7 +63,7 @@ export function HistoryTable() {
     if (item.document) {
       return item.document.extractedText || item.document.fileName;
     }
-    if (!item.isContentSaved && !item.content) {
+    if (!item.content) {
       return "Konten pesan tidak disimpan sesuai preferensi privasi.";
     }
     return item.content ?? "-";
@@ -183,7 +183,7 @@ export function HistoryTable() {
                           >
                             Detail
                           </Link>
-                          {item.report ? (
+                          {/* {item.report ? (
                             <span className="px-2 py-1 text-muted-foreground text-xs">
                               Dilaporkan
                             </span>
@@ -196,7 +196,7 @@ export function HistoryTable() {
                             >
                               Lapor
                             </Button>
-                          )}
+                          )} */}
                         </div>
                       </TableCell>
                     </TableRow>

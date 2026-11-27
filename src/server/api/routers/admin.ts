@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { getEvidenceSignedUrl } from "@/lib/s3";
 import { adminProcedure, createTRPCRouter } from "@/trpc/init";
 import { ScamModusEnum } from "./report";
 
@@ -12,7 +13,7 @@ export const ReportStatusEnum = z.enum([
 ]);
 
 export const adminRouter = createTRPCRouter({
-  // Antrean laporan masuk untuk moderasi admin[cite: 10]
+  // Antrean laporan masuk untuk moderasi admin
   listReports: adminProcedure
     .input(
       z.object({
@@ -40,7 +41,7 @@ export const adminRouter = createTRPCRouter({
           : {}),
       };
 
-      const [total, items] = await ctx.prisma.$transaction([
+      const [total, rawItems] = await ctx.prisma.$transaction([
         ctx.prisma.report.count({ where }),
         ctx.prisma.report.findMany({
           where,
@@ -61,12 +62,20 @@ export const adminRouter = createTRPCRouter({
               select: {
                 id: true,
                 fileName: true,
-                isPurged: true,
               },
             },
           },
         }),
       ]);
+
+      const items = await Promise.all(
+        rawItems.map(async (item) => ({
+          ...item,
+          evidenceUrl: item.evidenceUrl
+            ? await getEvidenceSignedUrl(item.evidenceUrl)
+            : null,
+        })),
+      );
 
       return {
         items,
@@ -76,14 +85,13 @@ export const adminRouter = createTRPCRouter({
       };
     }),
 
-  // Moderasi status laporan + simpan jejak audit ReportReview[cite: 10, 11, 16]
+  // Moderasi status laporan + simpan jejak audit ReportReview
   reviewReport: adminProcedure
     .input(
       z.object({
         reportId: z.string(),
         newStatus: ReportStatusEnum,
         suspectedModus: ScamModusEnum.optional(),
-        isCleanForDataset: z.boolean().optional(),
         notes: z.string().max(1000).optional(),
       }),
     )
@@ -106,9 +114,6 @@ export const adminRouter = createTRPCRouter({
             status: input.newStatus,
             ...(input.suspectedModus
               ? { suspectedModus: input.suspectedModus }
-              : {}),
-            ...(typeof input.isCleanForDataset === "boolean"
-              ? { isCleanForDataset: input.isCleanForDataset }
               : {}),
           },
         }),
@@ -136,12 +141,11 @@ export const adminRouter = createTRPCRouter({
       return updatedReport;
     }),
 
-  // Ekspor laporan terverifikasi yang bersih untuk tim AI[cite: 10, 11]
+  // Ekspor laporan terverifikasi yang bersih untuk tim AI
   exportCleanDataset: adminProcedure.query(async ({ ctx }) => {
     return ctx.prisma.report.findMany({
       where: {
         deletedAt: null,
-        isCleanForDataset: true,
         status: { in: ["VERIFIED_SCAM", "REJECTED"] },
       },
       select: {
@@ -156,7 +160,7 @@ export const adminRouter = createTRPCRouter({
     });
   }),
 
-  // Statistik Dashboard Monitoring Penipuan (4 Kelompok Informasi)[cite: 10]
+  // Statistik Dashboard Monitoring Penipuan (4 Kelompok Informasi)
   getDashboardStats: adminProcedure
     .input(
       z.object({

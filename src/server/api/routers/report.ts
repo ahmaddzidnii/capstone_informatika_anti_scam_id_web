@@ -1,6 +1,8 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { getEvidenceSignedUrl, uploadEvidenceToS3 } from "@/lib/s3";
 import {
+  adminProcedure,
   baseProcedure,
   createTRPCRouter,
   protectedProcedure,
@@ -24,40 +26,77 @@ export const ScamModusEnum = z.enum([
   "OTHER",
 ]);
 
+const createReportSchema = z.object({
+  content: z
+    .string()
+    .trim()
+    .min(5, "Isi pesan laporan minimal 5 karakter.")
+    .max(5000),
+  platform: PlatformEnum,
+  suspectedModus: ScamModusEnum.default("OTHER"),
+  chronology: z.string().max(2000).optional(),
+  checkId: z.string().optional(),
+  documentId: z.string().optional(),
+});
+
+const ALLOWED_EVIDENCE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/pdf",
+];
+
 export const reportRouter = createTRPCRouter({
-  // Kirim laporan pesan mencurigakan[cite: 10]
   create: baseProcedure
-    .input(
-      z.object({
-        content: z
-          .string()
-          .trim()
-          .min(5, "Isi pesan laporan minimal 5 karakter.")
-          .max(5000),
-        platform: PlatformEnum,
-        suspectedModus: ScamModusEnum.default("OTHER"),
-        suspiciousLink: z
-          .string()
-          .url("Format tautan tidak valid.")
-          .optional()
-          .or(z.literal("")),
-        chronology: z.string().max(2000).optional(),
-        checkId: z.string().optional(),
-        documentId: z.string().optional(),
-      }),
-    )
+    .input(z.instanceof(FormData))
     .mutation(async ({ ctx, input }) => {
+      const parsed = createReportSchema.safeParse({
+        content: input.get("content"),
+        platform: input.get("platform"),
+        suspectedModus: input.get("suspectedModus") || undefined,
+        chronology: input.get("chronology") || undefined,
+        checkId: input.get("checkId") || undefined,
+        documentId: input.get("documentId") || undefined,
+      });
+
+      if (!parsed.success) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: parsed.error.issues[0]?.message ?? "Input tidak valid.",
+        });
+      }
+
+      let evidenceUrl: string | null = null;
+      const file = input.get("evidenceFile");
+
+      if (file instanceof File && file.size > 0) {
+        if (!ALLOWED_EVIDENCE_TYPES.includes(file.type)) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Format bukti harus JPG, PNG, WebP, atau PDF.",
+          });
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Ukuran file bukti maksimal 5 MB.",
+          });
+        }
+
+        evidenceUrl = await uploadEvidenceToS3(file);
+      }
+
       const report = await ctx.prisma.report.create({
         data: {
           reporterId: ctx.session?.user.id ?? null,
-          checkId: input.checkId ?? null,
-          documentId: input.documentId ?? null,
-          content: input.content,
-          platform: input.platform,
-          suspectedModus: input.suspectedModus,
-          suspiciousLink: input.suspiciousLink || null,
-          chronology: input.chronology ?? null,
-          status: "PENDING", // Menunggu verifikasi administrator[cite: 10]
+          checkId: parsed.data.checkId ?? null,
+          documentId: parsed.data.documentId ?? null,
+          content: parsed.data.content,
+          platform: parsed.data.platform,
+          suspectedModus: parsed.data.suspectedModus,
+          chronology: parsed.data.chronology ?? null,
+          evidenceUrl,
+          status: "PENDING",
         },
       });
 
@@ -69,7 +108,6 @@ export const reportRouter = createTRPCRouter({
       return report;
     }),
 
-  // Daftar laporan milik pengguna login
   getMyReports: protectedProcedure
     .input(
       z.object({
@@ -105,8 +143,7 @@ export const reportRouter = createTRPCRouter({
       return { items, nextCursor };
     }),
 
-  // Detail laporan (hanya pemilik laporan atau admin)
-  getById: protectedProcedure
+  getById: adminProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       const report = await ctx.prisma.report.findFirst({
@@ -130,16 +167,13 @@ export const reportRouter = createTRPCRouter({
         });
       }
 
-      if (
-        ctx.session.user.role !== "admin" &&
-        report.reporterId !== ctx.session.user.id
-      ) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Anda tidak memiliki akses ke laporan ini.",
-        });
-      }
+      const signedEvidenceUrl = report.evidenceUrl
+        ? await getEvidenceSignedUrl(report.evidenceUrl)
+        : null;
 
-      return report;
+      return {
+        ...report,
+        evidenceUrl: signedEvidenceUrl,
+      };
     }),
 });

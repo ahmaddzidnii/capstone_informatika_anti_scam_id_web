@@ -3,17 +3,10 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import {
-  LuCheck,
-  LuFileText,
-  LuLoaderCircle,
-  LuShieldAlert,
-  LuUpload,
-  LuX,
-} from "react-icons/lu";
+import { useEffect, useState } from "react";
+import { LuCheck, LuLoaderCircle, LuShieldAlert } from "react-icons/lu";
 import * as z from "zod";
-
+import { FileDropzone } from "@/components/file-dropzone";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -93,17 +86,9 @@ const DOCUMENT_ANALYSIS_STEPS = [
   { threshold: 88, label: "Menyusun skor risiko & kesimpulan..." },
 ];
 
-function formatFileSize(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-}
-
 export default function DeteksiDokumenPage() {
   const router = useRouter();
   const [progress, setProgress] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const trpc = useTRPC();
 
@@ -235,129 +220,22 @@ export default function DeteksiDokumenPage() {
               onChange: documentFormSchema.shape.file,
             }}
             children={(field) => {
-              const selectedFile = field.state.value;
               const isInvalid =
                 field.state.meta.isTouched && !field.state.meta.isValid;
 
-              const selectFile = (file: File | undefined) => {
-                if (!file) return;
-                field.handleChange(file);
-                field.handleBlur();
-              };
-
-              const clearFile = () => {
-                field.handleChange(null);
-                if (fileInputRef.current) {
-                  fileInputRef.current.value = "";
-                }
-              };
-
               return (
                 <Field data-invalid={isInvalid}>
-                  {/** biome-ignore lint/a11y/useSemanticElements: false positive */}
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    aria-invalid={isInvalid}
-                    onKeyDown={(e) => {
-                      if (
-                        e.target === e.currentTarget &&
-                        (e.key === "Enter" || e.key === " ")
-                      ) {
-                        e.preventDefault();
-                        if (!mutation.isPending) fileInputRef.current?.click();
-                      }
-                    }}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      if (!mutation.isPending) setIsDragging(true);
-                    }}
-                    onDragLeave={() => setIsDragging(false)}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      setIsDragging(false);
-                      if (mutation.isPending) return;
-                      selectFile(e.dataTransfer.files?.[0]);
-                    }}
-                    onClick={() => {
-                      if (!mutation.isPending) fileInputRef.current?.click();
-                    }}
-                    className={`cursor-pointer rounded-xl border-2 border-dashed p-10 text-center transition-colors ${
-                      isInvalid
-                        ? "border-destructive bg-destructive/5"
-                        : isDragging
-                          ? "border-primary bg-muted/70"
-                          : "border-muted-foreground/30 hover:border-foreground/50 hover:bg-muted/30"
-                    } ${mutation.isPending ? "pointer-events-none opacity-60" : ""}`}
-                  >
-                    <input
-                      ref={fileInputRef}
-                      id={field.name}
-                      name={field.name}
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      className="hidden"
-                      disabled={mutation.isPending}
-                      onChange={(e) => selectFile(e.target.files?.[0])}
-                    />
-
-                    {!selectedFile ? (
-                      <div className="flex flex-col items-center space-y-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg border bg-background">
-                          <LuUpload className="h-6 w-6 text-foreground" />
-                        </div>
-                        <div className="space-y-1">
-                          <p className="font-semibold text-base">
-                            Tarik &amp; lepas file di sini, atau cari file
-                          </p>
-                          <p className="text-muted-foreground text-xs">
-                            Hanya PDF, JPG, PNG | Maksimal {MAX_FILE_SIZE_MB}{" "}
-                            MB, Maksimal 5 Halaman
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      // biome-ignore lint/a11y/noStaticElementInteractions: false positive
-                      <div
-                        role="presentation"
-                        onClick={(e) => e.stopPropagation()}
-                        className={`mx-auto flex max-w-md items-center justify-between gap-3 rounded-lg border bg-background p-3 text-left ${
-                          isInvalid ? "border-destructive/50" : ""
-                        }`}
-                      >
-                        <div className="flex items-center gap-3 overflow-hidden">
-                          <div
-                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${
-                              isInvalid
-                                ? "bg-destructive/10 text-destructive"
-                                : "bg-muted text-foreground"
-                            }`}
-                          >
-                            <LuFileText className="h-5 w-5" />
-                          </div>
-                          <div className="truncate">
-                            <p className="truncate font-medium text-sm">
-                              {selectedFile.name}
-                            </p>
-                            <p className="text-muted-foreground text-xs tabular-nums">
-                              {formatFileSize(selectedFile.size)}
-                            </p>
-                          </div>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          disabled={mutation.isPending}
-                          onClick={clearFile}
-                          aria-label="Hapus file"
-                        >
-                          <LuX className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-
+                  <FileDropzone
+                    id={field.name}
+                    name={field.name}
+                    value={field.state.value}
+                    onChange={(file) => field.handleChange(file)}
+                    onBlur={field.handleBlur}
+                    disabled={mutation.isPending}
+                    isInvalid={isInvalid}
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    description={`Hanya PDF, JPG, PNG | Maksimal ${MAX_FILE_SIZE_MB} MB, Maksimal 5 Halaman`}
+                  />
                   {isInvalid && <FieldError errors={field.state.meta.errors} />}
                 </Field>
               );

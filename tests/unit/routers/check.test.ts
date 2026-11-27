@@ -10,14 +10,11 @@ describe("checkRouter", () => {
   it("menolak teks kurang dari 5 karakter atau lebih dari 5000 karakter", async () => {
     const { caller } = createTestCaller();
 
-    await expect(
-      caller.check.analyzeText({ text: "hai", saveContent: false }),
-    ).rejects.toThrow();
+    await expect(caller.check.analyzeText({ text: "hai" })).rejects.toThrow();
 
     await expect(
       caller.check.analyzeText({
         text: "a".repeat(5001),
-        saveContent: false,
       }),
     ).rejects.toThrow();
   });
@@ -41,7 +38,6 @@ describe("checkRouter", () => {
 
     await caller.check.analyzeText({
       text: "Kirim kode OTP kamu sekarang juga!",
-      saveContent: false,
     });
 
     expect(mockPrisma.check.create).toHaveBeenCalledWith(
@@ -63,7 +59,6 @@ describe("checkRouter", () => {
     await expect(
       caller.check.analyzeText({
         text: "Pesan panjang untuk diuji saat AI mati",
-        saveContent: false,
       }),
     ).rejects.toMatchObject({ code: "SERVICE_UNAVAILABLE" });
   });

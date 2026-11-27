@@ -1,142 +1,35 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import {
   LuArrowLeft,
-  LuCheck,
-  LuCircleAlert,
-  LuCircleCheck,
   LuClock,
   LuEyeOff,
-  LuFileText,
   LuFlag,
-  LuImagePlus,
-  LuRefreshCw,
   LuRotateCcw,
-  LuShieldCheck,
-  LuTriangleAlert,
 } from "react-icons/lu";
 import { AnalyzedTextViewer } from "@/components/analyzed-text-viewer";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/toast";
 import { callbackSDK } from "@/lib/callback-sdk";
 import { useTRPC } from "@/trpc/client";
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-}
-
-function formatDate(date: Date | string): string {
-  return new Intl.DateTimeFormat("id-ID", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(date));
-}
-
-function getVerdictConfig(label: string) {
-  const normalized = label.trim().toUpperCase();
-
-  if (
-    normalized.includes("NORMAL") ||
-    normalized.includes("SAFE") ||
-    normalized.includes("AMAN") ||
-    normalized.includes("LEGIT")
-  ) {
-    return {
-      badge: "Aman / Normal",
-      headline: "Tidak Ditemukan Indikasi Penipuan",
-      summary:
-        "Konten ini memiliki pola komunikasi wajar dan tidak mengarah pada modus penipuan umum.",
-      accentBorder: "border-l-emerald-600",
-      badgeClass: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-      barClass: "bg-emerald-600",
-      iconClass: "text-emerald-600 dark:text-emerald-400",
-      Icon: LuShieldCheck,
-    };
-  }
-
-  if (
-    normalized.includes("SUSPICIOUS") ||
-    normalized.includes("MENCURIGAKAN") ||
-    normalized.includes("WASPADA")
-  ) {
-    return {
-      badge: "Perlu Kewaspadaan",
-      headline: "Ditemukan Beberapa Pola Mencurigakan",
-      summary:
-        "Terdapat elemen yang patut diverifikasi ulang sebelum Anda merespons atau mengklik tautan.",
-      accentBorder: "border-l-amber-500",
-      badgeClass: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
-      barClass: "bg-amber-500",
-      iconClass: "text-amber-600 dark:text-amber-400",
-      Icon: LuTriangleAlert,
-    };
-  }
-
-  return {
-    badge: label.replace(/_/g, " "),
-    headline: "Terindikasi Penipuan",
-    summary:
-      "Konten ini mengandung pola rekayasa sosial atau ciri penipuan berisiko tinggi.",
-    accentBorder: "border-l-red-600",
-    badgeClass: "bg-red-500/10 text-red-700 dark:text-red-400",
-    barClass: "bg-red-600",
-    iconClass: "text-red-600 dark:text-red-400",
-    Icon: LuCircleAlert,
-  };
-}
-
-function ResultPageSkeleton() {
-  return (
-    <div className="container mx-auto max-w-3xl space-y-8 px-4 py-10 sm:px-6 sm:py-14">
-      <div className="space-y-3">
-        <div className="h-4 w-32 animate-pulse rounded bg-muted" />
-        <div className="h-8 w-64 animate-pulse rounded bg-muted" />
-        <div className="h-4 w-48 animate-pulse rounded bg-muted" />
-      </div>
-
-      <div className="space-y-4 rounded-xl border p-6">
-        <div className="h-5 w-32 animate-pulse rounded bg-muted" />
-        <div className="h-7 w-72 animate-pulse rounded bg-muted" />
-        <div className="h-4 w-full animate-pulse rounded bg-muted" />
-      </div>
-
-      <div className="space-y-3">
-        <div className="h-4 w-40 animate-pulse rounded bg-muted" />
-        <div className="h-28 w-full animate-pulse rounded-xl bg-muted" />
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <div className="h-36 animate-pulse rounded-xl bg-muted" />
-        <div className="h-36 animate-pulse rounded-xl bg-muted" />
-      </div>
-    </div>
-  );
-}
+import {
+  ReportDialog,
+  type ReportFormValues,
+  ReportSuccessDialog,
+} from "./_components/report-dialog";
+import {
+  ResultErrorState,
+  ResultPageSkeleton,
+} from "./_components/result-states";
+import { formatDate } from "./_components/result-utils";
+import {
+  DocumentAttachmentCard,
+  VerdictSummaryCard,
+} from "./_components/verdict-summary-card";
 
 export default function CheckResultPage() {
   const params = useParams<{ id: string }>();
@@ -151,9 +44,23 @@ export default function CheckResultPage() {
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
 
+  const reportMutation = useMutation({
+    ...trpc.report.create.mutationOptions(),
+    onSuccess: () => {
+      setIsSuccessOpen(true);
+      refetch();
+    },
+    onError: (err) => {
+      toast.add({
+        title: "Gagal mengirim laporan",
+        description: err.message || "Silakan coba beberapa saat lagi.",
+        type: "error",
+      });
+    },
+  });
+
   const hintIsDocument = searchParams.get("type") === "dokumen";
 
-  // Decode dan validasi parameter ?back= menggunakan callbackSDK
   const backToken = searchParams.get("back");
   const backPayload = callbackSDK.decode(backToken);
   const backHref = backPayload ? callbackSDK.toUrl(backToken) : null;
@@ -170,52 +77,21 @@ export default function CheckResultPage() {
       backHref ?? (hintIsDocument ? "/deteksi-dokumen" : "/deteksi-pesan");
 
     return (
-      <div className="container mx-auto max-w-md space-y-5 px-4 py-24 text-center">
-        <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-          <LuCircleAlert className="h-5 w-5" />
-        </div>
-        <div className="space-y-1.5">
-          <h1 className="font-semibold text-lg tracking-tight">
-            {isNotFound
-              ? "Hasil Pemeriksaan Tidak Ditemukan"
-              : "Gagal Memuat Data"}
-          </h1>
-          <p className="text-muted-foreground text-sm leading-relaxed">
-            {isNotFound
-              ? "Data pemeriksaan mungkin sudah dihapus atau tautan tidak valid."
-              : error?.message ||
-                "Terjadi kendala saat menghubungkan ke server."}
-          </p>
-        </div>
-        <div className="flex items-center justify-center gap-2.5 pt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.push(fallbackHref)}
-          >
-            {backLabel}
-          </Button>
-          {!isNotFound && (
-            <Button
-              size="sm"
-              onClick={() => refetch()}
-              disabled={isRefetching}
-              className="gap-1.5"
-            >
-              <LuRefreshCw
-                className={`h-3.5 w-3.5 ${isRefetching ? "animate-spin" : ""}`}
-              />
-              Muat Ulang
-            </Button>
-          )}
-        </div>
-      </div>
+      <ResultErrorState
+        isNotFound={isNotFound}
+        errorMessage={error?.message}
+        backLabel={backLabel}
+        onBack={() => router.push(fallbackHref)}
+        onRetry={() => refetch()}
+        isRetrying={isRefetching}
+      />
     );
   }
 
   const isDocument =
     Boolean(data.document) ||
     data.inputSource.toUpperCase().includes("DOCUMENT");
+
   const rawPercent =
     data.confidenceScore <= 1
       ? Math.round(data.confidenceScore * 100)
@@ -229,27 +105,28 @@ export default function CheckResultPage() {
     normalizedLabel.includes("LEGIT");
 
   const confidencePercent = isSafeVerdict ? 100 - rawPercent : rawPercent;
-  const verdict = getVerdictConfig(data.predictionLabel);
-  const VerdictIcon = verdict.Icon;
 
-  const extractedDocText =
-    data.document && "extractedText" in data.document
-      ? (data.document.extractedText as string | null)
-      : null;
-  const contentText = (data.content ?? extractedDocText)?.trim() ?? "";
+  const contentText =
+    (data.content ?? data.document?.extractedText)?.trim() ?? "";
 
-  const handleBackToCheck = () => {
-    router.push(isDocument ? "/deteksi-dokumen" : "/deteksi-pesan");
-  };
+  const handleSubmitReport = async (values: ReportFormValues) => {
+    const formData = new FormData();
+    formData.append("content", values.content);
+    formData.append("platform", values.platform);
+    formData.append("suspectedModus", values.suspectedModus);
 
-  const handleSubmitReport = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsReportOpen(false);
-    setIsSuccessOpen(true);
+    if (values.chronology) formData.append("chronology", values.chronology);
+    if (values.checkId) formData.append("checkId", values.checkId);
+    if (values.documentId) formData.append("documentId", values.documentId);
+    if (values.evidenceFile) {
+      formData.append("evidenceFile", values.evidenceFile);
+    }
+
+    await reportMutation.mutateAsync(formData);
   };
 
   return (
-    <div className="container mx-auto max-w-3xl space-y-8 px-4 py-10 sm:px-6 sm:py-14">
+    <div className="container mx-auto max-w-5xl space-y-8 px-4 py-10 sm:px-6 sm:py-14">
       {/* Editorial Header */}
       <header className="space-y-3">
         {backHref && (
@@ -285,72 +162,20 @@ export default function CheckResultPage() {
       </header>
 
       {/* Verdict Summary Card */}
-      <section
-        className={`rounded-xl border border-l-4 ${verdict.accentBorder} bg-card p-5 sm:p-6`}
-      >
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-          <div className="max-w-xl space-y-2">
-            <div className="inline-flex items-center gap-2">
-              <VerdictIcon className={`h-4 w-4 ${verdict.iconClass}`} />
-              <span
-                className={`font-semibold text-xs uppercase tracking-wider ${verdict.iconClass}`}
-              >
-                {verdict.badge}
-              </span>
-            </div>
-            <h2 className="font-semibold text-lg tracking-tight sm:text-xl">
-              {verdict.headline}
-            </h2>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              {verdict.summary}
-            </p>
-          </div>
+      <VerdictSummaryCard
+        predictionLabel={data.predictionLabel}
+        confidencePercent={confidencePercent}
+      />
 
-          {/* Confidence Meter */}
-          <div className="shrink-0 space-y-1.5 border-t pt-4 sm:w-40 sm:border-t-0 sm:pt-0 sm:text-right">
-            <div className="flex items-baseline justify-between sm:justify-end sm:gap-2">
-              <span className="text-muted-foreground text-xs">Keyakinan</span>
-              <span className="font-bold text-2xl tabular-nums tracking-tight">
-                {confidencePercent}%
-              </span>
-            </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
-              <div
-                className={`h-full rounded-full transition-all ${verdict.barClass}`}
-                style={{ width: `${confidencePercent}%` }}
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Lampiran Dokumen (jika tipe dokumen) */}
+      {/* Lampiran Dokumen */}
       {isDocument && data.document && (
-        <section className="flex flex-col gap-3 rounded-xl border bg-card px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
-              <LuFileText className="h-4 w-4" />
-            </div>
-            <div className="min-w-0">
-              <p className="truncate font-medium text-sm">
-                {data.document.fileName}
-              </p>
-              <p className="text-muted-foreground text-xs tabular-nums">
-                {formatFileSize(data.document.fileSize)}
-                {data.document.pageCount
-                  ? ` · ${data.document.pageCount} halaman`
-                  : ""}
-                {data.document.extractionMethod
-                  ? ` · ${data.document.extractionMethod}`
-                  : ""}
-              </p>
-            </div>
-          </div>
-          <span className="inline-flex shrink-0 items-center gap-1.5 font-medium text-muted-foreground text-xs">
-            <LuCheck className="h-3.5 w-3.5 text-emerald-600" />
-            Ekstraksi {data.document.extractionStatus}
-          </span>
-        </section>
+        <DocumentAttachmentCard
+          fileName={data.document.fileName}
+          fileSize={data.document.fileSize}
+          pageCount={data.document.pageCount}
+          extractionMethod={data.document.extractionMethod}
+          extractionStatus={data.document.extractionStatus}
+        />
       )}
 
       {/* Konten yang Diperiksa */}
@@ -364,9 +189,7 @@ export default function CheckResultPage() {
           <div className="flex items-start gap-3 rounded-xl border border-dashed bg-muted/20 px-4 py-3.5 text-muted-foreground text-sm">
             <LuEyeOff className="mt-0.5 h-4 w-4 shrink-0" />
             <p className="leading-relaxed">
-              {isDocument && data.document?.isPurged
-                ? "Teks hasil ekstraksi dokumen telah dihapus otomatis dari server sesuai pengaturan privasi Anda (opsi penyimpanan untuk pelaporan tidak diaktifkan)."
-                : "Konten teks tidak disimpan di server."}
+              Konten teks tidak tersedia untuk pemeriksaan ini.
             </p>
           </div>
         )}
@@ -407,21 +230,26 @@ export default function CheckResultPage() {
 
       {/* Footer Actions */}
       <footer className="flex flex-col-reverse gap-3 border-t pt-6 sm:flex-row sm:items-center sm:justify-between">
-        <Button variant="outline" onClick={handleBackToCheck} className="gap-2">
+        <Button
+          onClick={() =>
+            router.push(isDocument ? "/deteksi-dokumen" : "/deteksi-pesan")
+          }
+          className="gap-2"
+        >
           <LuRotateCcw className="h-4 w-4" />
           Periksa {isDocument ? "Dokumen" : "Pesan"} Lain
         </Button>
 
         {data.report ? (
-          <Button variant="secondary" disabled className="gap-2">
-            <LuClock className="h-4 w-4" />
-            Sudah Dilaporkan ({data.report.status})
-          </Button>
+          <div className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3.5 font-medium text-amber-700 text-xs dark:text-amber-400">
+            <LuClock className="h-3.5 w-3.5 shrink-0" />
+            <span>Sudah Dilaporkan · {data.report.status}</span>
+          </div>
         ) : (
           <Button
-            variant="secondary"
+            variant="outline"
             onClick={() => setIsReportOpen(true)}
-            className="gap-2"
+            className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
           >
             <LuFlag className="h-4 w-4" />
             Laporkan {isDocument ? "Dokumen" : "Pesan"} Ini
@@ -429,145 +257,24 @@ export default function CheckResultPage() {
         )}
       </footer>
 
-      {/* MODAL PELAPORAN */}
-      <Dialog open={isReportOpen} onOpenChange={setIsReportOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="font-bold text-lg">
-              Laporkan {isDocument ? "Dokumen" : "Pesan"}
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              Bantu tingkatkan akurasi deteksi dengan melaporkan konten
-              mencurigakan ini.
-            </DialogDescription>
-          </DialogHeader>
+      {/* Modals / Drawers */}
+      <ReportDialog
+        open={isReportOpen}
+        onOpenChange={setIsReportOpen}
+        isDocument={isDocument}
+        contentText={contentText}
+        documentFileName={data.document?.fileName}
+        checkId={data.id}
+        documentId={data.document?.id}
+        isSubmitting={reportMutation.isPending}
+        onSubmitReport={handleSubmitReport}
+      />
 
-          <form onSubmit={handleSubmitReport} className="space-y-4 pt-2">
-            {contentText ? (
-              <div className="space-y-1.5">
-                <Label className="text-xs">Konten Terlampir</Label>
-                <Textarea
-                  value={contentText}
-                  readOnly
-                  className="min-h-[84px] resize-none bg-muted/50 text-muted-foreground text-xs"
-                />
-              </div>
-            ) : (
-              isDocument &&
-              data.document?.isPurged && (
-                <p className="rounded-lg border bg-muted/40 px-3 py-2 text-muted-foreground text-xs">
-                  Teks dokumen tidak tersimpan di server. Anda tetap dapat
-                  mengirim laporan dengan mengisi kronologi di bawah.
-                </p>
-              )
-            )}
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label className="text-xs">
-                  Platform Pengirim <span className="text-destructive">*</span>
-                </Label>
-                <Select defaultValue="whatsapp">
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Pilih platform" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                    <SelectItem value="sms">SMS</SelectItem>
-                    <SelectItem value="telegram">Telegram</SelectItem>
-                    <SelectItem value="email">Email</SelectItem>
-                    <SelectItem value="lainnya">Lainnya</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs">
-                  Kategori Dugaan <span className="text-destructive">*</span>
-                </Label>
-                <Select defaultValue="kategori-ai">
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Pilih kategori" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="kategori-ai">
-                      Klaim Hadiah / Undian
-                    </SelectItem>
-                    <SelectItem value="phishing">
-                      Phishing / Tautan Palsu
-                    </SelectItem>
-                    <SelectItem value="impersonation">
-                      Penyamaran Instansi / Kerabat
-                    </SelectItem>
-                    <SelectItem value="investasi">
-                      Investasi / Tagihan Fiktif
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="report-chronology" className="text-xs">
-                Kronologi Singkat <span className="text-destructive">*</span>
-              </Label>
-              <Textarea
-                id="report-chronology"
-                required
-                placeholder="Ceritakan secara singkat bagaimana Anda menerima pesan/dokumen ini..."
-                className="min-h-[84px] resize-none text-sm"
-              />
-            </div>
-
-            <div className="flex flex-col-reverse gap-2.5 pt-2 sm:flex-row sm:justify-between">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="gap-1.5"
-              >
-                <LuImagePlus className="h-4 w-4" />
-                Bukti Tambahan
-              </Button>
-              <Button type="submit" size="sm">
-                Kirim Laporan
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* MODAL SUKSES */}
-      <Dialog open={isSuccessOpen} onOpenChange={setIsSuccessOpen}>
-        <DialogContent className="text-center sm:max-w-sm">
-          <DialogHeader className="items-center space-y-2.5 pt-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
-              <LuCircleCheck className="h-6 w-6" />
-            </div>
-            <DialogTitle className="font-bold text-lg">
-              Laporan Terkirim
-            </DialogTitle>
-            <Badge variant="secondary" className="font-medium text-xs">
-              Menunggu Verifikasi
-            </Badge>
-            <DialogDescription className="pt-1 text-muted-foreground text-sm">
-              Terima kasih, laporan Anda telah masuk dan akan segera ditinjau
-              oleh tim kami.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="flex justify-center pt-3 pb-1">
-            <Button
-              variant="outline"
-              size="sm"
-              className="min-w-[110px]"
-              onClick={() => setIsSuccessOpen(false)}
-            >
-              Tutup
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ReportSuccessDialog
+        open={isSuccessOpen}
+        onOpenChange={setIsSuccessOpen}
+        reportId={reportMutation.data?.id ?? data.report?.id}
+      />
     </div>
   );
 }

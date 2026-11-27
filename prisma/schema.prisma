@@ -7,8 +7,58 @@ datasource db {
   provider = "postgresql"
 }
 
+
+enum InputSource {
+  WEB_TEXT
+  WEB_DOCUMENT
+  TELEGRAM_BOT
+}
+
+enum PredictionLabel {
+  SCAM
+  NORMAL
+  UNCERTAIN
+}
+
+enum ExtractionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum ExtractionMethod {
+  PYMUPDF
+  TESSERACT
+}
+
+enum ReportPlatform {
+  SMS
+  WHATSAPP
+  TELEGRAM
+  EMAIL
+  OTHER
+}
+
+enum SuspectedModus {
+  FAKE_PRIZE
+  JOB_SCAM
+  BANK_IMPERSONATION
+  INVESTMENT
+  TRANSFER_REQUEST
+  OTP_PHISHING
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  IN_REVIEW
+  VERIFIED_SCAM
+  INSUFFICIENT_EVIDENCE
+  REJECTED
+}
+
 // ==========================================
-// AUTHENTICATION MODELS (GORM-Style)
+// AUTHENTICATION MODELS (Better Auth)
 // ==========================================
 
 model User {
@@ -18,7 +68,6 @@ model User {
   emailVerified Boolean   @default(false) @map("email_verified")
   image         String?
 
-  // Role: "user" (Pengguna Umum) atau "admin" (Administrator)
   role          String?   @default("user")
   banned        Boolean?  @default(false)
   banReason     String?   @map("ban_reason")
@@ -96,7 +145,7 @@ model Verification {
 }
 
 // ==========================================
-// ANTISCAMID CORE MODELS (GORM-Style)
+// ANTISCAMID CORE MODELS
 // ==========================================
 
 model Check {
@@ -104,19 +153,13 @@ model Check {
   userId          String?   @map("user_id")
   user            User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  // Values: "WEB_TEXT" | "WEB_DOCUMENT" | "TELEGRAM_BOT"
-  inputSource     String    @default("WEB_TEXT") @map("input_source")
-
-  // Kebijakan privasi: teks disimpan hanya jika user menyetujui penyimpanan riwayat
+  inputSource     InputSource    @default(WEB_TEXT) @map("input_source")
   content         String?   @db.Text
-  isContentSaved  Boolean   @default(false) @map("is_content_saved")
 
-  // Hasil klasifikasi FastAPI: "SCAM" | "NORMAL" | "UNCERTAIN"
-  predictionLabel String    @map("prediction_label")
+  predictionLabel PredictionLabel    @map("prediction_label")
   confidenceScore Float     @map("confidence_score")
-  modelVersion    String    @map("model_version")
+  modelVersion    String    @default("v1") @map("model_version")
 
-  // Indikator rule-based & saran tindakan
   indicators      String[]
   recommendation  String?   @db.Text
   latencyMs       Int?      @map("latency_ms")
@@ -137,65 +180,52 @@ model Check {
 }
 
 model Document {
-  id               String    @id @default(cuid(2))
-  checkId          String    @unique @map("check_id")
-  check            Check     @relation(fields: [checkId], references: [id], onDelete: Cascade)
+  id               String   @id @default(cuid(2))
+  checkId          String   @unique @map("check_id")
+  check            Check    @relation(fields: [checkId], references: [id], onDelete: Cascade)
 
-  fileName         String    @map("file_name")
-  mimeType         String    @map("mime_type")
-  fileSize         Int       @map("file_size") // Maks 5 MB sesuai batasan proposal
-  pageCount        Int?      @map("page_count") // Maks 5 halaman PDF
+  fileName         String   @map("file_name")
+  mimeType         String   @map("mime_type")
+  fileSize         Int      @map("file_size")
+  pageCount        Int?     @map("page_count")
 
-  // Status: "PENDING" | "SUCCESS" | "FAILED"
-  extractionStatus String    @default("PENDING") @map("extraction_status")
-  // Method: "PYMUPDF" | "TESSERACT"
-  extractionMethod String?   @map("extraction_method")
-  extractedText    String?   @db.Text @map("extracted_text")
+  extractionStatus ExtractionStatus   @default(PENDING) @map("extraction_status")
+  extractionMethod ExtractionMethod?  @map("extraction_method")
+  extractedText    String?  @db.Text @map("extracted_text")
 
-  // Penghapusan file sementara setelah pemeriksaan selesai
-  storagePath      String?   @map("storage_path")
-  isPurged         Boolean   @default(false) @map("is_purged")
-  purgedAt         DateTime? @map("purged_at")
-
-  createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt        DateTime  @updatedAt @map("updated_at")
-  deletedAt        DateTime? @map("deleted_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   report           Report?
 
-  @@index([deletedAt])
   @@map("documents")
 }
 
 model Report {
-  id                String    @id @default(cuid(2))
-  reporterId        String?   @map("reporter_id")
-  reporter          User?     @relation("UserReports", fields: [reporterId], references: [id], onDelete: SetNull)
+  id             String    @id @default(cuid(2))
+  reporterId     String?   @map("reporter_id")
+  reporter       User?     @relation("UserReports", fields: [reporterId], references: [id], onDelete: SetNull)
 
-  checkId           String?   @unique @map("check_id")
-  check             Check?    @relation(fields: [checkId], references: [id], onDelete: SetNull)
+  checkId        String?   @unique @map("check_id")
+  check          Check?    @relation(fields: [checkId], references: [id], onDelete: SetNull)
 
-  documentId        String?   @unique @map("document_id")
-  document          Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  documentId     String?   @unique @map("document_id")
+  document       Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
 
-  content           String    @db.Text
-  // Platform: "SMS" | "WHATSAPP" | "TELEGRAM" | "EMAIL" | "OTHER"
-  platform          String
-  // Modus: "FAKE_PRIZE" | "JOB_SCAM" | "BANK_IMPERSONATION" | "INVESTMENT" | "TRANSFER_REQUEST" | "OTP_PHISHING" | "OTHER"
-  suspectedModus    String    @default("OTHER") @map("suspected_modus")
-  suspiciousLink    String?   @map("suspicious_link")
-  chronology        String?   @db.Text
+  content        String    @db.Text
+  platform       ReportPlatform
+  suspectedModus SuspectedModus    @default(OTHER) @map("suspected_modus")
+  chronology     String?   @db.Text
+  evidenceUrl    String?   @map("evidence_url")
 
-  // Status: "PENDING" | "IN_REVIEW" | "VERIFIED_SCAM" | "INSUFFICIENT_EVIDENCE" | "REJECTED"
-  status            String    @default("PENDING")
-  isCleanForDataset Boolean   @default(false) @map("is_clean_for_dataset")
+  status         ReportStatus    @default(PENDING)
 
-  createdAt         DateTime  @default(now()) @map("created_at")
-  updatedAt         DateTime  @updatedAt @map("updated_at")
-  deletedAt         DateTime? @map("deleted_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
 
-  reviews           ReportReview[]
-  botInteraction    BotInteraction?
+  reviews        ReportReview[]
+  botInteraction BotInteraction?
 
   @@index([status])
   @@index([suspectedModus])
@@ -205,46 +235,40 @@ model Report {
 }
 
 model ReportReview {
-  id             String    @id @default(cuid(2))
-  reportId       String    @map("report_id")
-  report         Report    @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  id             String   @id @default(cuid(2))
+  reportId       String   @map("report_id")
+  report         Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
 
-  reviewerId     String    @map("reviewer_id")
-  reviewer       User      @relation("AdminReviews", fields: [reviewerId], references: [id], onDelete: Restrict)
+  reviewerId     String   @map("reviewer_id")
+  reviewer       User     @relation("AdminReviews", fields: [reviewerId], references: [id], onDelete: Restrict)
 
-  previousStatus String    @map("previous_status")
-  newStatus      String    @map("new_status")
-  notes          String?   @db.Text
+  previousStatus ReportStatus   @map("previous_status")
+  newStatus      ReportStatus   @map("new_status")
+  notes          String?  @db.Text
 
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
-  deletedAt      DateTime? @map("deleted_at")
+  createdAt      DateTime @default(now()) @map("created_at")
 
   @@index([reportId])
   @@index([reviewerId])
-  @@index([deletedAt])
   @@map("report_reviews")
 }
 
 model BotInteraction {
-  id               String    @id @default(cuid(2))
-  telegramUserId   String    @map("telegram_user_id")
-  telegramChatId   String    @map("telegram_chat_id")
-  telegramUsername String?   @map("telegram_username")
-  command          String    // "/start" | "/cek" | "/lapor" | "/panduan" | "/bantuan"
+  id               String   @id @default(cuid(2))
+  telegramUserId   String   @map("telegram_user_id")
+  telegramChatId   String   @map("telegram_chat_id")
+  telegramUsername String?  @map("telegram_username")
+  command          String
 
-  checkId          String?   @unique @map("check_id")
-  check            Check?    @relation(fields: [checkId], references: [id], onDelete: SetNull)
+  checkId          String?  @unique @map("check_id")
+  check            Check?   @relation(fields: [checkId], references: [id], onDelete: SetNull)
 
-  reportId         String?   @unique @map("report_id")
-  report           Report?   @relation(fields: [reportId], references: [id], onDelete: SetNull)
+  reportId         String?  @unique @map("report_id")
+  report           Report?  @relation(fields: [reportId], references: [id], onDelete: SetNull)
 
-  createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt        DateTime  @updatedAt @map("updated_at")
-  deletedAt        DateTime? @map("deleted_at")
+  createdAt        DateTime @default(now()) @map("created_at")
 
   @@index([telegramUserId])
   @@index([createdAt])
-  @@index([deletedAt])
   @@map("bot_interactions")
 }

@@ -24,7 +24,7 @@ const STATUS_MAP = {
 } as const;
 
 export const checkRouter = createTRPCRouter({
-  // Pemeriksaan teks pesan (dapat diakses tamu maupun pengguna login)[cite: 16]
+  // Pemeriksaan teks pesan (dapat diakses tamu maupun pengguna login)
   analyzeText: baseProcedure
     .input(
       z.object({
@@ -33,7 +33,6 @@ export const checkRouter = createTRPCRouter({
           .trim()
           .min(5, "Pesan terlalu pendek untuk dianalisis.")
           .max(5000, "Pesan melebihi batas maksimal 5.000 karakter."),
-        saveContent: z.boolean().default(false),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -64,8 +63,7 @@ export const checkRouter = createTRPCRouter({
         data: {
           userId: ctx.session?.user.id ?? null,
           inputSource: "WEB_TEXT",
-          content: input.saveContent ? input.text : null,
-          isContentSaved: input.saveContent,
+          content: input.text,
           predictionLabel: aiResult.label,
           confidenceScore: aiResult.score,
           modelVersion: aiResult.model_version,
@@ -103,7 +101,7 @@ export const checkRouter = createTRPCRouter({
               pageCount: true,
               extractionStatus: true,
               extractionMethod: true,
-              isPurged: true,
+              extractedText: true,
             },
           },
           report: {
@@ -122,7 +120,7 @@ export const checkRouter = createTRPCRouter({
       return check;
     }),
 
-  // Riwayat pemeriksaan milik pengguna login[cite: 16]
+  // Riwayat pemeriksaan milik pengguna login
   getMyHistory: protectedProcedure
     .input(
       z.object({
@@ -225,7 +223,6 @@ export const checkRouter = createTRPCRouter({
         data: {
           deletedAt: new Date(),
           content: null,
-          isContentSaved: false,
         },
       });
 

@@ -81,7 +81,7 @@ export default function DeteksiPesanPage() {
       onChange: formSchema,
     },
     onSubmit: async ({ value }) => {
-      mutation.mutate({ text: value.text.trim(), saveContent: true });
+      mutation.mutate({ text: value.text.trim() });
     },
   });
 

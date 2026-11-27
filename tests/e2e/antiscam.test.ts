@@ -50,7 +50,6 @@ describe("AntiScamID End-to-End Flow", () => {
     const guestCaller = await makeCaller();
     const res = await guestCaller.check.analyzeText({
       text: "Selamat Anda menang hadiah Rp50.000.000, segera transfer biaya admin!",
-      saveContent: false,
     });
 
     expect(res.predictionLabel).toBe("SCAM");
@@ -107,12 +106,10 @@ describe("AntiScamID End-to-End Flow", () => {
       reportId: createdReportId,
       newStatus: "VERIFIED_SCAM",
       suspectedModus: "OTP_PHISHING",
-      isCleanForDataset: true,
       notes: "Terbukti pola phishing OTP.",
     });
 
     expect(reviewed.status).toBe("VERIFIED_SCAM");
-    expect(reviewed.isCleanForDataset).toBe(true);
 
     const stats = await adminCaller.admin.getDashboardStats({ days: 7 });
     expect(stats.checkStats.length).toBeGreaterThan(0);

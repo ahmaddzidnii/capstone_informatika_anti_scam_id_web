@@ -8,7 +8,7 @@ import { botProcedure, createTRPCRouter } from "@/trpc/init";
 import { ScamModusEnum } from "./report";
 
 export const botRouter = createTRPCRouter({
-  // Pencatatan penggunaan perintah informasi (/start, /panduan, /bantuan)[cite: 9]
+  // Pencatatan penggunaan perintah informasi (/start, /panduan, /bantuan)
   logCommand: botProcedure
     .input(
       z.object({
@@ -29,7 +29,7 @@ export const botRouter = createTRPCRouter({
       });
     }),
 
-  // Pemeriksaan teks melalui bot Telegram (/cek)[cite: 9, 22]
+  // Pemeriksaan teks melalui bot Telegram (/cek)
   checkMessage: botProcedure
     .input(
       z.object({
@@ -64,7 +64,6 @@ export const botRouter = createTRPCRouter({
         data: {
           inputSource: "TELEGRAM_BOT",
           content: input.text,
-          isContentSaved: true,
           predictionLabel: aiResult.label,
           confidenceScore: aiResult.score,
           modelVersion: aiResult.model_version,
@@ -94,7 +93,7 @@ export const botRouter = createTRPCRouter({
       return check;
     }),
 
-  // Pelaporan pesan mencurigakan melalui bot Telegram (/lapor)[cite: 9, 22]
+  // Pelaporan pesan mencurigakan melalui bot Telegram (/lapor)
   submitReport: botProcedure
     .input(
       z.object({

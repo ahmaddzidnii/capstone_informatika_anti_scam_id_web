@@ -20,7 +20,6 @@ export const documentRouter = createTRPCRouter({
     .input(
       z.instanceof(FormData).transform((fd, ctx) => {
         const file = fd.get("file");
-        const keepForReport = fd.get("keepForReport") === "true";
         const consentAccepted = fd.get("consentAccepted") === "true";
 
         if (!(file instanceof File)) {
@@ -59,7 +58,7 @@ export const documentRouter = createTRPCRouter({
           return z.NEVER;
         }
 
-        return { file, keepForReport };
+        return { file };
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -95,15 +94,12 @@ export const documentRouter = createTRPCRouter({
       }
 
       const latencyMs = Math.round(performance.now() - startTime);
-      // File/teks sementara langsung dibersihkan kecuali akan dilampirkan ke laporan
-      const shouldPurgeNow = !input.keepForReport;
 
       const createdCheck = await ctx.prisma.check.create({
         data: {
           userId: ctx.session?.user.id ?? null,
           inputSource: "WEB_DOCUMENT",
           content: null,
-          isContentSaved: false,
           predictionLabel: docResult.label,
           confidenceScore: docResult.score,
           modelVersion: docResult.model_version,
@@ -118,10 +114,7 @@ export const documentRouter = createTRPCRouter({
               pageCount: docResult.page_count,
               extractionStatus: "SUCCESS",
               extractionMethod: docResult.extraction_method,
-              extractedText: shouldPurgeNow ? null : docResult.extracted_text,
-              storagePath: null,
-              isPurged: shouldPurgeNow,
-              purgedAt: shouldPurgeNow ? new Date() : null,
+              extractedText: docResult.extracted_text,
             },
           },
         },
@@ -131,38 +124,11 @@ export const documentRouter = createTRPCRouter({
       ctx.logger.info(
         {
           checkId: createdCheck.id,
-          isPurged: shouldPurgeNow,
           latencyMs,
         },
         "Document screening completed",
       );
 
       return createdCheck;
-    }),
-
-  // Menandai metadata/teks dokumen sementara telah dibersihkan
-  markPurged: baseProcedure
-    .input(z.object({ documentId: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      const doc = await ctx.prisma.document.update({
-        where: { id: input.documentId },
-        data: {
-          extractedText: null,
-          storagePath: null,
-          isPurged: true,
-          purgedAt: new Date(),
-        },
-      });
-
-      ctx.logger.info(
-        { documentId: doc.id },
-        "Temporary document marked as purged",
-      );
-
-      return {
-        id: doc.id,
-        isPurged: doc.isPurged,
-        purgedAt: doc.purgedAt,
-      };
     }),
 });
