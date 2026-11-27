@@ -100,6 +100,7 @@ export const botRouter = createTRPCRouter({
         telegramUserId: z.string(),
         telegramChatId: z.string(),
         telegramUsername: z.string().optional(),
+        checkId: z.string().optional(), // <-- Tambahkan ini
         content: z.string().trim().min(5).max(5000),
         suspectedModus: ScamModusEnum.default("OTHER"),
         chronology: z.string().max(2000).optional(),
@@ -113,6 +114,7 @@ export const botRouter = createTRPCRouter({
           suspectedModus: input.suspectedModus,
           chronology: input.chronology ?? null,
           status: "PENDING",
+          ...(input.checkId ? { checkId: input.checkId } : {}), // <-- Nyangkut ke Check
           botInteraction: {
             create: {
               telegramUserId: input.telegramUserId,
@@ -127,6 +129,7 @@ export const botRouter = createTRPCRouter({
       ctx.logger.info(
         {
           reportId: report.id,
+          checkId: input.checkId ?? null,
           telegramUserId: input.telegramUserId,
         },
         "Bot scam report submitted",

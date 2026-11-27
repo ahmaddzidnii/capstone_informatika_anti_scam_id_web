@@ -142,7 +142,7 @@ async function handleCheckText(
     return;
   }
 
-  // Reply ke pesan user agar tombol "Laporkan" bisa mereferensikan teks aslinya
+  // Reply ke pesan user agar tombol "Laporkan" bisa mereferensikan teks/caption aslinya
   const waitMsg = await ctx.reply("Menganalisis struktur dan pola pesan...", {
     ...(replyToMessageId
       ? { reply_parameters: { message_id: replyToMessageId } }
@@ -158,10 +158,10 @@ async function handleCheckText(
       text: cleanText,
     });
 
-    // Tampilkan tombol lapor langsung pada hasil analisis
+    // Sisipkan result.id langsung ke callback_data agar checkId ter-link saat dilaporkan
     const resultKeyboard = new InlineKeyboard();
     if (replyToMessageId) {
-      resultKeyboard.text("Laporkan Pesan Ini ke Admin", "action:report_reply");
+      resultKeyboard.text("Laporkan Pesan Ini ke Admin", `report:${result.id}`);
     }
     resultKeyboard.row().text("Menu Utama", "menu:start");
 
@@ -234,13 +234,10 @@ bot.command("bantuan", async (ctx) => {
       "<b>Pusat Bantuan AntiScamID</b>",
       "────────────────────",
       "<b>1. Analisis Otomatis</b>",
-      "Kirim atau teruskan pesan secara langsung tanpa perintah tambahan, atau gunakan <code>/cek [isi pesan]</code>.",
+      "Kirim atau teruskan pesan teks secara langsung tanpa perintah tambahan, atau gunakan <code>/cek [isi pesan]</code>.",
       "",
       "<b>2. Pelaporan Database</b>",
       "Gunakan <code>/lapor [isi pesan]</code> atau tekan tombol <b>Laporkan Pesan Ini ke Admin</b> setelah hasil pemeriksaan muncul.",
-      "",
-      "<b>3. Pemindaian Dokumen &amp; Gambar</b>",
-      "Untuk pemeriksaan tangkapan layar atau berkas PDF, silakan akses portal web AntiScamID.",
     ].join("\n"),
     {
       parse_mode: "HTML",
@@ -286,9 +283,10 @@ bot.command("lapor", async (ctx) => {
 
   await ctx.reply(
     [
-      "<b>Laporan Diterima</b>",
-      `ID Referensi: <code>${escapeHtml(String(report.id))}</code>`,
-      "Status: <b>Menunggu Verifikasi Admin</b>",
+      "<b>Laporan Berhasil Dikirim</b>",
+      "────────────────────",
+      `ID Pelaporan: <code>${escapeHtml(String(report.id))}</code>`,
+      "Status: <b>Menunggu Verifikasi Admin (PENDING)</b>",
       "",
       "Terima kasih atas kontribusi Anda dalam pembaruan basis data keamanan.",
     ].join("\n"),
@@ -355,11 +353,19 @@ bot.callbackQuery("menu:lapor", async (ctx) => {
   );
 });
 
-// Handler tombol "Laporkan Pesan Ini ke Admin" dari hasil analisis
-bot.callbackQuery("action:report_reply", async (ctx) => {
+// Handler tombol "Laporkan Pesan Ini ke Admin" dengan checkId tersemat
+bot.callbackQuery(/^report:([a-zA-Z0-9_-]+)$/, async (ctx) => {
+  const checkId = ctx.match[1];
   const repliedMessage = ctx.callbackQuery.message?.reply_to_message;
-  const originalText =
-    repliedMessage && "text" in repliedMessage ? repliedMessage.text : null;
+
+  // Mendukung pesan teks biasa maupun media yang memiliki caption
+  const originalText = repliedMessage
+    ? "text" in repliedMessage && repliedMessage.text
+      ? repliedMessage.text
+      : "caption" in repliedMessage && repliedMessage.caption
+        ? repliedMessage.caption
+        : null
+    : null;
 
   if (!originalText || !ctx.from || !ctx.chat) {
     await ctx.answerCallbackQuery({
@@ -372,40 +378,86 @@ bot.callbackQuery("action:report_reply", async (ctx) => {
   // Jika user mengirim via `/cek teks`, bersihkan prefix `/cek `
   const cleanPayload = originalText.replace(/^\/cek(@\w+)?\s+/i, "").trim();
 
-  const caller = await getBotCaller();
-  const report = await caller.bot.submitReport({
-    telegramUserId: String(ctx.from.id),
-    telegramChatId: String(ctx.chat.id),
-    telegramUsername: ctx.from.username,
-    content: cleanPayload,
-  });
+  // Deteksi apakah pesan asli merupakan hasil forward
+  const isForwarded = Boolean(
+    repliedMessage &&
+      "forward_origin" in repliedMessage &&
+      repliedMessage.forward_origin,
+  );
 
-  await ctx.answerCallbackQuery({
-    text: `Laporan tercatat (ID: ${report.id})`,
-  });
+  try {
+    const caller = await getBotCaller();
+    const report = await caller.bot.submitReport({
+      telegramUserId: String(ctx.from.id),
+      telegramChatId: String(ctx.chat.id),
+      telegramUsername: ctx.from.username,
+      checkId,
+      content: cleanPayload,
+      chronology: isForwarded
+        ? "Pesan diteruskan (forwarded) langsung oleh pengguna ke bot Telegram."
+        : undefined,
+    });
 
-  // Ubah tombol agar tidak dikirim ganda
-  await ctx.editMessageReplyMarkup({
-    reply_markup: new InlineKeyboard()
-      .text(`Terkirim ke Admin (ID: ${report.id})`, "noop")
-      .row()
-      .text("Menu Utama", "menu:start"),
-  });
-});
+    await ctx.answerCallbackQuery();
 
-bot.callbackQuery("noop", async (ctx) => {
-  await ctx.answerCallbackQuery({
-    text: "Laporan ini sudah tercatat di sistem.",
-  });
+    // Hapus tombol lapor dari pesan hasil analisis agar tidak diklik ganda
+    await ctx.editMessageReplyMarkup({
+      reply_markup: new InlineKeyboard().text("Menu Utama", "menu:start"),
+    });
+
+    // Kirim pesan balasan baru berisi ID Pelaporan dan Status
+    await ctx.reply(
+      [
+        "<b>Laporan Berhasil Dikirim</b>",
+        "────────────────────",
+        `ID Pelaporan: <code>${escapeHtml(String(report.id))}</code>`,
+        "Status: <b>Menunggu Verifikasi Admin (PENDING)</b>",
+        "",
+        "Terima kasih. Laporan Anda telah terhubung dengan hasil analisis dan akan segera ditinjau oleh tim admin.",
+      ].join("\n"),
+      {
+        parse_mode: "HTML",
+        reply_parameters: { message_id: repliedMessage?.message_id },
+        reply_markup: backToMenuKeyboard,
+      },
+    );
+  } catch {
+    await ctx.answerCallbackQuery({
+      text: "Laporan untuk pesan ini sudah tercatat atau gagal diproses.",
+      show_alert: true,
+    });
+  }
 });
 
 // ==========================================
-// HANDLER TEKS OTOMATIS & MENU TELEGRAM
+// HANDLER PESAN OTOMATIS (TEKS, CAPTION, & MEDIA)
 // ==========================================
 
-bot.on("message:text", async (ctx) => {
-  if (ctx.message.text.startsWith("/")) return;
-  await handleCheckText(ctx, ctx.message.text, ctx.message.message_id);
+// 1. Menangkap teks biasa, teks forward, maupun media yang disertai caption
+bot.on(["message:text", "message:caption"], async (ctx) => {
+  const rawText = ctx.message.text ?? ctx.message.caption;
+  if (!rawText || rawText.startsWith("/")) return;
+
+  await handleCheckText(ctx, rawText, ctx.message.message_id);
+});
+
+// 2. Menangkap media tanpa teks (foto, dokumen/PDF, video, voice note, stiker, dll.)
+// Menangkap media tanpa teks (foto, dokumen/PDF, video, voice note, stiker, dll.)
+bot.on("message", async (ctx) => {
+  await ctx.reply(
+    [
+      "<b>Format Pesan Tidak Didukung</b>",
+      "────────────────────",
+      "Saat ini layanan bot belum mendukung pemeriksaan dokumen, gambar, atau berkas media lainnya.",
+      "",
+      "Silakan salin dan kirimkan <b>isi teks pesan</b> yang mencurigakan ke ruang obrolan ini untuk dianalisis.",
+    ].join("\n"),
+    {
+      parse_mode: "HTML",
+      reply_parameters: { message_id: ctx.message.message_id },
+      reply_markup: backToMenuKeyboard,
+    },
+  );
 });
 
 // Opsional: Panggil sekali saat startup/deploy untuk mendaftarkan tombol Menu di klien Telegram
